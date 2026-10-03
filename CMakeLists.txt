@@ -1,7 +1,9 @@
 ﻿# CMakeList.txt : CMake project for CProjectBase, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.13)
+cmake_minimum_required (VERSION 3.24)
+
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
