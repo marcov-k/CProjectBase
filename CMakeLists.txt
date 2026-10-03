@@ -14,7 +14,7 @@ endif()
 project (CProjectBase LANGUAGES C)
 
 # Add source to this project's executable.
-add_executable (CProjectBase  "main.c" "include/m_string.h" "src/m_string.c")
+add_executable (CProjectBase  "main.c" "include/m_string.h" "src/m_string.c" "include/math_utils.h" "src/math_utils.c")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CProjectBase PROPERTY CXX_STANDARD 20)

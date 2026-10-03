@@ -7,6 +7,7 @@ typedef struct [[nodiscard("String owns heap memory; the result must be stored a
 {
 	char* data;
 	size_t length;
+	size_t capacity;
 } String;
 
 typedef struct [[nodiscard("StringSplit owns heap memory; the result must be stored and destroyed")]] StringSplit
@@ -15,30 +16,52 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 	String string2;
 } StringSplit;
 
-// Returned String is owned by and must be destroyed by caller
-String CreateString(const char s[]); // create a new String struct from a C-style string
-void DestroyString(String* s); // safely frees memory if allocated
-// Returned String is owned by and must be destroyed by caller
-String CopyString(const String* s); // create a new String struct from an existing String
-void CopyStringTo(String* dest, const String* source); // copy data from one String to another
-void CopyCStrToString(String* dest, const char source[]); // copy data from C-style string to a String
+/* All functions return empty Strings in case of failure. */
 
+// Create a new String struct from a C-style string
+// Returned String is owned by and must be destroyed by caller
+String CreateString(const char s[]);
+// Free all heap memory used by a String
+void DestroyString(String* s);
+// Create a new String struct from an existing String
+// Returned String is owned by and must be destroyed by caller
+String CopyString(const String* s);
+// Copy data from one String to another
+void CopyStringTo(String* dest, const String* source);
+// Copy data from C-style string to a String
+void CopyCStrToString(String* dest, const char source[]);
+
+// Free all memory used by a StringSplit
 void DestroyStringSplit(StringSplit* split);
 
-void PrintString(const String* s); // print data of a String
-void PrintStringLn(const String* s); // print data of a String and append a line break;
+// Print data of a String
+void PrintString(const String* s);
+// Print data of a String and append a line break
+void PrintStringLn(const String* s);
 
-String ConcatStrings(const String* s1, const String* s2); // concatenate two Strings
+// Concatenate two Strings
 // Returned String is owned by and must be destroyed by caller
-String ConcatStringCStr(const String* s1, const char s2[]); // concatenate a String and a C-style string
+String ConcatStrings(const String* s1, const String* s2);
+// Concatenate a String and a C-style string
 // Returned String is owned by and must be destroyed by caller
-String ConcatCStrString(const char s1[], const String* s2); // concatenate a C-style string and a String
+String ConcatStringCStr(const String* s1, const char s2[]);
+// Concatenate a C-style string and a String
+// Returned String is owned by and must be destroyed by caller
+String ConcatCStrString(const char s1[], const String* s2);
 
-
-void ReverseString(String* s); // reverse characters of a String in place
+// Reverse characters of a String in place
+void ReverseString(String* s);
+// Split a String at an index
 // Returned StringSplit is owned by and must be destroyed caller
-StringSplit SplitString(const String* s, size_t index); // split a String at an index
-void TrimStringStart(String* s, size_t count); // trim characters from start of a String
-void TrimStringEnd(String* s, size_t count); // trim characters from end of a String
+StringSplit SplitString(const String* s, size_t index);
+// Trim characters from start of a String
+void TrimStringStart(String* s, size_t count);
+// Trim characters from end of a String
+void TrimStringEnd(String* s, size_t count);
+// Trim characters from start and end of a String (start index inclusive, end index exclusive)
+void TrimString(String* s, size_t start, size_t end);
+// Extract substring from a String between a start and index index (start inclusive, end exclusive)
+// Returned String is owned by and must be destroyed by caller
+String ExtractSubstring(const String* s, size_t start, size_t end);
 
 #endif
