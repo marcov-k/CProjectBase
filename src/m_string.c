@@ -4,27 +4,48 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+static int GrowString(String* s, size_t length)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (s->data != NULL && s->capacity >= length) return M_SUCCESS;
+
+	size_t capacity = max(s->capacity, 1);
+	while (capacity < length) capacity *= 2;
+
+	char* newBuffer = realloc(s->data, capacity + 1);
+	if (newBuffer == NULL) return M_FAILURE_GEN;
+
+	s->data = newBuffer;
+	s->capacity = capacity;
+
+	return M_SUCCESS;
+}
+
 String CreateString(const char s[])
 {
 	String string = { NULL, 0, 0 };
 
-	if (s == NULL) return string;
+	if (s == NULL)
+	{
+		if (GrowString(&string, 0) != M_SUCCESS) return string;
+		
+		string.data[0] = '\0';
+		return string;
+	}
 
 	size_t length = strlen(s);
+	if (GrowString(&string, length) != M_SUCCESS) return string;
 
-	string.data = malloc(length + 1);
-	if (string.data == NULL) return string;
-
-	string.capacity = length + 1;
+	memcpy(string.data, s, length);
+	string.data[length] = '\0';
 	string.length = length;
-	memcpy(string.data, s, length + 1);
 
 	return string;
 }
 
-void DestroyString(String* s)
+int DestroyString(String* s)
 {
-	if (s == NULL) return;
+	if (s == NULL) return M_FAILURE_GEN;
 
 	if (s->data != NULL) // only free memory if allocated
 	{
@@ -33,201 +54,290 @@ void DestroyString(String* s)
 	}
 	s->capacity = 0;
 	s->length = 0;
+
+	return M_SUCCESS;
+}
+
+int ClearString(String* s)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (s->data == NULL) return M_SUCCESS;
+
+	s->data[0] = '\0';
+	s->length = 0;
+
+	return M_SUCCESS;
 }
 
 String CopyString(const String* s)
 {
 	String copy = { NULL, 0, 0 };
 
-	if (s == NULL || s->data == NULL) return copy;
+	if (s == NULL) return copy;
 
-	copy.data = malloc(s->length + 1);
-	if (copy.data == NULL) return copy;
+	if (GrowString(&copy, s->length) != M_SUCCESS) return copy;
 
-	copy.capacity = s->length + 1;
+	memcpy(copy.data, s->data, s->length);
+	copy.data[s->length] = '\0';
 	copy.length = s->length;
-	memcpy(copy.data, s->data, s->length + 1);
 
 	return copy;
 }
 
-void CopyStringTo(String* dest, const String* source)
+int CopyStringTo(String* dest, const String* source)
 {
-	if (dest == source || dest == NULL || source == NULL || source->data == NULL) return;
+	if (dest == NULL || source == NULL) return M_FAILURE_GEN;
 
-	if (dest->capacity < source->length)
+	if (dest == source) return M_SUCCESS;
+
+	if (source->data == NULL || source->length == 0)
 	{
-		DestroyString(dest);
-		dest->data = malloc(source->length + 1);
-		if (dest->data == NULL) return;
-
-		dest->capacity = source->length + 1;
-		dest->length = source->length;
+		ClearString(dest);
+		return M_SUCCESS;
 	}
 
-	memcpy(dest->data, source->data, source->length + 1);
+	if (GrowString(dest, source->length) != M_SUCCESS) return M_FAILURE_GEN;
+
+	memcpy(dest->data, source->data, source->length);
+	dest->data[source->length] = '\0';
+	dest->length = source->length;
+
+	return M_SUCCESS;
 }
 
-void CopyCStrToString(String* dest, const char source[])
+int CopyCStrToString(String* dest, const char source[])
 {
-	if (dest == NULL || source == NULL) return;
+	if (dest == NULL || source == NULL) return M_FAILURE_GEN;
 
 	size_t length = strlen(source);
-	if (dest->capacity < length)
+	if (length == 0)
 	{
-		DestroyString(dest);
-		dest->data = malloc(length + 1);
-		if (dest->data == NULL) return;
-
-		dest->capacity = length + 1;
-		dest->length = length;
+		ClearString(dest);
+		return M_SUCCESS;
 	}
 
-	memcpy(dest->data, source, length + 1);
+	if (GrowString(dest, length) != M_SUCCESS) return M_FAILURE_GEN;
+
+	memmove(dest->data, source, length);
+	dest->data[length] = '\0';
+	dest->length = length;
+
+	return M_SUCCESS;
 }
 
-void DestroyStringSplit(StringSplit* split)
+StringSplit CreateStringSplit(void)
 {
-	if (split == NULL) return;
+	StringSplit split = { CreateString(NULL), CreateString(NULL) };
+	return split;
+}
+
+int DestroyStringSplit(StringSplit* split)
+{
+	if (split == NULL) return M_FAILURE_GEN;
 
 	DestroyString(&split->string1);
 	DestroyString(&split->string2);
+
+	return M_SUCCESS;
 }
 
-void PrintString(const String* s)
+int PrintString(const String* s)
 {
-	if (s == NULL || s->data == NULL) return;
+	if (s == NULL) return M_FAILURE_GEN;
 
 	printf("%s", s->data);
+
+	return M_SUCCESS;
 }
 
-void PrintStringLn(const String* s)
+int PrintStringLn(const String* s)
 {
-	if (s == NULL || s->data == NULL) return;
+	if (s == NULL) return M_FAILURE_GEN;
 
 	printf("%s\n", s->data);
+
+	return M_SUCCESS;
 }
 
-String ConcatStrings(const String* s1, const String* s2)
+static int PrependStringBytes(String* s, const char prepend[], size_t prependLen)
 {
-	String result = { NULL, 0, 0 };
+	if (s == NULL) return M_FAILURE_GEN;
+	if (prepend == NULL || prependLen == 0) return M_SUCCESS;
 
-	if (s1 != NULL && s1->data != NULL && s2 != NULL && s2->data != NULL)
-	{
-		size_t length = s1->length + s2->length;
-		result.data = malloc(length + 1);
-		if (result.data == NULL) return result;
+	int status = M_SUCCESS;
+	char* temp = malloc(prependLen);
+	if (temp == NULL) goto FAILURE;
+	memcpy(temp, prepend, prependLen);
 
-		result.capacity = length + 1;
-		result.length = length;
-		memcpy(result.data, s1->data, s1->length);
-		memcpy(result.data + s1->length, s2->data, s2->length + 1);
-	}
-	else if (s1 != NULL && s1->data != NULL)
-	{
-		result.data = malloc(s1->length + 1);
-		if (result.data == NULL) return result;
+	size_t length = s->length + prependLen;
+	if (GrowString(s, length) != M_SUCCESS) goto FAILURE;
 
-		result.capacity = s1->length + 1;
-		result.length = s1->length;
-		memcpy(result.data, s1->data, result.capacity);
-	}
-	else if (s2 != NULL && s2->data != NULL)
-	{
-		result.data = malloc(s2->length + 1);
-		if (result.data == NULL) return result;
+	memmove(s->data + prependLen, s->data, s->length);
+	memmove(s->data, temp, prependLen);
+	s->data[length] = '\0';
+	s->length = length;
 
-		result.capacity = s2->length + 1;
-		result.length = s2->length;
-		memcpy(result.data, s2->data, result.capacity);
-	}
+	goto CLEAN_UP;
 
-	return result;
+FAILURE:
+	status = M_FAILURE_GEN;
+
+CLEAN_UP:
+	if (temp != NULL) free(temp);
+	
+	return status;
 }
 
-String ConcatStringCStr(const String* s1, const char s2[])
+int PrependString(String* s, const String* prepend)
 {
-	String result = { NULL, 0, 0 };
-
-	if (s1 != NULL && s1->data != NULL && s2 != NULL)
-	{
-		size_t s2Len = strlen(s2);
-		size_t length = s1->length + s2Len;
-
-		result.data = malloc(length + 1);
-		if (result.data == NULL) return result;
-
-		result.capacity = length + 1;
-		result.length = length;
-		memcpy(result.data, s1->data, s1->length);
-		memcpy(result.data + s1->length, s2, s2Len + 1);
-	}
-	else if (s1 != NULL && s1->data != NULL)
-	{
-		result.data = malloc(s1->length + 1);
-		if (result.data == NULL) return result;
-
-		result.capacity = s1->length + 1;
-		result.length = s1->length;
-		memcpy(result.data, s1->data, result.capacity);
-	}
-	else if (s2 != NULL)
-	{
-		size_t length = strlen(s2);
-		result.data = malloc(length + 1);
-		if (result.data == NULL) return result;
-
-		result.capacity = length + 1;
-		result.length = length;
-		memcpy(result.data, s2, result.capacity);
-	}
-
-	return result;
+	if (prepend == NULL) return M_FAILURE_GEN;
+	
+	return PrependStringBytes(s, prepend->data, prepend->length);
 }
 
-String ConcatCStrString(const char s1[], const String* s2)
+int PrependCStr(String* s, const char prepend[])
 {
-	String result = { NULL, 0, 0 };
+	if (prepend == NULL) return M_FAILURE_GEN;
 
-	if (s1 != NULL && s2 != NULL && s2->data != NULL)
-	{
-		size_t s1Len = strlen(s1);
-		size_t length = s1Len + s2->length;
-
-		result.data = malloc(length + 1);
-		if (result.data == NULL) return result;
-
-		result.capacity = length + 1;
-		result.length = length;
-		memcpy(result.data, s1, s1Len);
-		memcpy(result.data + s1Len, s2->data, s2->length + 1);
-	}
-	else if (s1 != NULL)
-	{
-		size_t s1Len = strlen(s1);
-		result.data = malloc(s1Len + 1);
-		if (result.data == NULL) return result;
-
-		result.capacity = s1Len + 1;
-		result.length = s1Len;
-		memcpy(result.data, s1, result.capacity);
-	}
-	else if (s2 != NULL && s2->data != NULL)
-	{
-		result.data = malloc(s2->length + 1);
-		if (result.data == NULL) return result;
-
-		result.capacity = s2->length + 1;
-		result.length = s2->length;
-		memcpy(result.data, s2->data, result.capacity);
-	}
-
-	return result;
+	return PrependStringBytes(s, prepend, strlen(prepend));
 }
 
-void ReverseString(String* s)
+static int AppendStringBytes(String* s, const char append[], size_t appendLen)
 {
-	if (s == NULL || s->data == NULL) return;
+	if (s == NULL) return M_FAILURE_GEN;
+	if (append == NULL || appendLen == 0) return M_SUCCESS;
+
+	int status = M_SUCCESS;
+	char* temp = malloc(appendLen);
+	if (temp == NULL) goto FAILURE;
+	memcpy(temp, append, appendLen);
+
+	size_t length = s->length + appendLen;
+	if (GrowString(s, length) != M_SUCCESS) goto FAILURE;
+
+	memmove(s->data + s->length, temp, appendLen);
+	s->data[length] = '\0';
+	s->length = length;
+
+	goto CLEAN_UP;
+
+FAILURE:
+	status = M_FAILURE_GEN;
+
+CLEAN_UP:
+	if (temp != NULL) free(temp);
+
+	return status;
+}
+
+int AppendString(String* s, const String* append)
+{
+	if (append == NULL) return M_FAILURE_GEN;
+
+	return AppendStringBytes(s, append->data, append->length);
+}
+
+int AppendCStr(String* s, const char append[])
+{
+	if (append == NULL) return M_FAILURE_GEN;
+
+	return AppendStringBytes(s, append, strlen(append));
+}
+
+static int ConcatCStrings(String* dest, const char s1[], size_t s1Len, const char s2[], size_t s2Len)
+{
+	if (dest == NULL) return M_FAILURE_GEN;
+
+	int status = M_SUCCESS;
+	char *temp1 = NULL, *temp2 = NULL;
+
+	if (s1 != NULL && s1Len > 0 && s2 != NULL && s2Len > 0)
+	{
+		temp1 = malloc(s1Len);
+		if (temp1 == NULL) goto FAILURE;
+		
+		temp2 = malloc(s2Len);
+		if (temp2 == NULL) goto FAILURE;
+
+		memcpy(temp1, s1, s1Len);
+		memcpy(temp2, s2, s2Len);
+
+		size_t length = s1Len + s2Len;
+		if (GrowString(dest, length) != M_SUCCESS) goto FAILURE;
+
+		memcpy(dest->data, temp1, s1Len);
+		memcpy(dest->data + s1Len, temp2, s2Len);
+		dest->data[length] = '\0';
+		dest->length = length;
+	}
+	else if (s1 != NULL && s1Len > 0)
+	{
+		temp1 = malloc(s1Len);
+		if (temp1 == NULL) goto FAILURE;
+
+		memcpy(temp1, s1, s1Len);
+
+		if (GrowString(dest, s1Len) != M_SUCCESS) goto FAILURE;
+
+		memcpy(dest->data, temp1, s1Len);
+		dest->data[s1Len] = '\0';
+		dest->length = s1Len;
+	}
+	else if (s2 != NULL && s2Len > 0)
+	{
+		temp2 = malloc(s2Len);
+		if (temp2 == NULL) goto FAILURE;
+
+		memcpy(temp2, s2, s2Len);
+
+		if (GrowString(dest, s2Len) != M_SUCCESS) goto FAILURE;
+
+		memcpy(dest->data, temp2, s2Len);
+		dest->data[s2Len] = '\0';
+		dest->length = s2Len;
+	}
+	else
+	{
+		ClearString(dest);
+	}
+
+	goto CLEAN_UP;
+
+FAILURE:
+	status = M_FAILURE_GEN;
+
+CLEAN_UP:
+	if (temp1 != NULL) free(temp1);
+	if (temp2 != NULL) free(temp2);
+
+	return status;
+}
+
+int ConcatStrings(String* dest, const String* s1, const String* s2)
+{
+	if (dest == NULL || s1 == NULL || s2 == NULL) return M_FAILURE_GEN;
+
+	return ConcatCStrings(dest, s1->data, s1->length, s2->data, s2->length);
+}
+
+int ConcatStringCStr(String* dest, const String* s1, const char s2[])
+{
+	if (dest == NULL || s1 == NULL || s2 == NULL) return M_FAILURE_GEN;
+
+	return ConcatCStrings(dest, s1->data, s1->length, s2, strlen(s2));
+}
+
+int ConcatCStrString(String* dest, const char s1[], const String* s2)
+{
+	if (dest == NULL || s1 == NULL || s2 == NULL) return M_FAILURE_GEN;
+
+	return ConcatCStrings(dest, s1, strlen(s1), s2->data, s2->length);
+}
+
+int ReverseString(String* s)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (s->data == NULL || s->length == 0) return M_SUCCESS;
 
 	size_t halfLen = s->length / 2;
 	for (size_t i = 0; i < halfLen; ++i)
@@ -238,133 +348,207 @@ void ReverseString(String* s)
 		s->data[otherIndex] = temp;
 	}
 	s->data[s->length] = '\0';
+
+	return M_SUCCESS;
 }
 
-StringSplit SplitString(const String* s, size_t index)
+int SplitString(StringSplit* split, const String* s, size_t index)
 {
-	StringSplit split = { { NULL, 0 }, { NULL, 0 } };
+	if (split == NULL || s == NULL) return M_FAILURE_GEN;
 
-	if (s == NULL || s->data == NULL) return split;
+	if (s->data == NULL)
+	{
+		ClearString(&split->string1);
+		ClearString(&split->string2);
+		return M_SUCCESS;
+	}
 
 	if (index >= s->length)
 	{
-		split.string1.data = malloc(s->length + 1);
-		if (split.string1.data == NULL) return split;
+		if (GrowString(&split->string1, s->length) != M_SUCCESS) return M_FAILURE_GEN;
 
-		split.string1.capacity = s->length + 1;
-		split.string1.length = s->length;
-		memcpy(split.string1.data, s->data, split.string1.capacity);
+		ClearString(&split->string2);
+
+		memmove(split->string1.data, s->data, s->length);
+		split->string1.data[s->length] = '\0';
+		split->string1.length = s->length;
 	}
 	else if (index == 0)
 	{
-		split.string2.data = malloc(s->length + 1);
-		if (split.string2.data == NULL) return split;
+		if (GrowString(&split->string2, s->length) != M_SUCCESS) return M_FAILURE_GEN;
 
-		split.string2.capacity = s->length + 1;
-		split.string2.capacity = s->length;
-		memcpy(split.string2.data, s->data, split.string2.capacity);
+		ClearString(&split->string1);
+
+		memmove(split->string2.data, s->data, s->length);
+		split->string2.data[s->length] = '\0';
+		split->string2.length = s->length;
 	}
 	else
 	{
-		split.string1.data = malloc(index + 1);
-		if (split.string1.data == NULL) return split;
+		if (GrowString(&split->string1, index) != M_SUCCESS) return M_FAILURE_GEN;
+		if (GrowString(&split->string2, s->length - index) != M_SUCCESS) return M_FAILURE_GEN;
 
-		split.string2.data = malloc(s->length - index + 1);
-		if (split.string2.data == NULL)
-		{
-			DestroyString(&split.string1);
-			return split;
-		}
+		memmove(split->string1.data, s->data, index);
+		split->string1.data[index] = '\0';
+		split->string1.length = index;
 
-		split.string1.capacity = index + 1;
-		split.string1.length = index;
-		memcpy(split.string1.data, s->data, index);
-		split.string1.data[index] = '\0';
-
-		split.string2.capacity = s->length - index + 1;
-		split.string2.length = s->length - index;
-		memcpy(split.string2.data, s->data + index, split.string2.capacity);
+		memmove(split->string2.data, s->data + index, s->length - index);
+		split->string2.data[s->length - index] = '\0';
+		split->string2.length = s->length - index;
 	}
 
-	return split;
+	return M_SUCCESS;
 }
 
-void TrimStringStart(String* s, size_t count)
+int TrimStringStart(String* s, size_t count)
 {
-	if (s == NULL || s->data == NULL || count == 0) return;
+	if (s == NULL) return M_FAILURE_GEN;
+	if (s->data == NULL || count == 0) return M_SUCCESS;
 
 	if (count >= s->length)
 	{
-		DestroyString(s);
-		return;
+		ClearString(s);
+		return M_SUCCESS;
 	}
 
+	memmove(s->data, s->data + count, s->length - count);
+	s->data[s->length - count] = '\0';
 	s->length -= count;
-	memmove(s->data, s->data + count, s->length);
-	s->data[s->length] = '\0';
+
+	return M_SUCCESS;
 }
 
-void TrimStringEnd(String* s, size_t count)
+int TrimStringEnd(String* s, size_t count)
 {
-	if (s == NULL || s->data == NULL || count == 0) return;
+	if (s == NULL) return M_FAILURE_GEN;
+	if (s->data == NULL || count == 0) return M_SUCCESS;
 
 	if (count >= s->length)
 	{
-		DestroyString(s);
-		return;
+		ClearString(s);
+		return M_SUCCESS;
 	}
 
+	s->data[s->length - count] = '\0';
 	s->length -= count;
-	s->data[s->length] = '\0';
+
+	return M_SUCCESS;
 }
 
-void TrimString(String* s, size_t start, size_t end)
+int TrimString(String* s, size_t start, size_t end)
 {
-	if (s == NULL || s->data == NULL) return;
+	if (s == NULL) return M_FAILURE_GEN;
+	if (start > end) return M_FAILURE_GEN;
 
-	if (start >= end) return;
-
-	if (start == 0 && end >= s->length) return;
+	if (s->data == NULL) return M_SUCCESS;
+	if (start == 0 && end >= s->length) return M_SUCCESS;
 
 	if (start >= s->length)
 	{
-		DestroyString(s);
-		return;
+		ClearString(s);
+		return M_SUCCESS;
 	}
-
-	start = CLAMP(start, 0, s->length - 1);
-	end = CLAMP(end, 0, s->length);
-
-	s->length = end - start;
-	memmove(s->data, s->data + start, s->length);
-	s->data[s->length] = '\0';
-}
-
-String ExtractSubstring(const String* s, size_t start, size_t end)
-{
-	String substring = { NULL, 0, 0 };
-
-	if (s == NULL || s->data == NULL || start >= s->length) return substring;
-
-	if (start >= end) return substring;
-
-	if (start == 0 && end >= s->length)
-	{
-		CopyStringTo(&substring, s);
-		return substring;
-	}
-
-	start = CLAMP(start, 0, s->length - 1);
-	end = CLAMP(end, 0, s->length);
+	end = min(end, s->length);
 
 	size_t length = end - start;
-	substring.data = malloc(length + 1);
-	if (substring.data == NULL) return substring;
+	memmove(s->data, s->data + start, length);
+	s->data[length] = '\0';
+	s->length = length;
 
-	substring.capacity = length + 1;
-	substring.length = length;
-	memcpy(substring.data, s->data + start, length);
-	substring.data[length] = '\0';
+	return M_SUCCESS;
+}
 
-	return substring;
+int ExtractSubstring(String* dest, const String* s, size_t start, size_t end)
+{
+	if (dest == NULL || s == NULL) return M_FAILURE_GEN;
+
+	if (start > end) return M_FAILURE_GEN;
+
+	if (s->data == NULL)
+	{
+		ClearString(dest);
+		return M_SUCCESS;
+	}
+	if (start == 0 && end >= s->length)
+	{
+		return CopyStringTo(dest, s);
+	}
+
+	if (start >= s->length)
+	{
+		ClearString(dest);
+		return M_SUCCESS;
+	}
+
+	end = min(end, s->length);
+
+	size_t length = end - start;
+	if (GrowString(dest, length) != M_SUCCESS) return M_FAILURE_GEN;
+
+	memmove(dest->data, s->data + start, length);
+	dest->data[length] = '\0';
+	dest->length = length;
+
+	return M_SUCCESS;
+}
+
+bool StringsEqual(const String* s1, const String* s2)
+{
+	if (s1 == NULL || s2 == NULL) return false;
+
+	if ((s1->data == NULL || s1->length == 0) && (s2->data == NULL || s2->length == 0)) return true;
+
+	if (s1->length != s2->length) return false;
+
+	if (memcmp(s1->data, s2->data, s1->length) == 0) return true;
+
+	return false;
+}
+
+bool StringsEqualCStr(const String* s1, const char s2[])
+{
+	if (s1 == NULL || s2 == NULL) return false;
+
+	size_t s2Len = strlen(s2);
+	if ((s1->data == NULL || s1->length == 0) && s2Len == 0) return true;
+
+	if (s1->length != s2Len) return false;
+
+	if (memcmp(s1->data, s2, s1->length) == 0) return true;
+
+	return false;
+}
+
+static bool StringContainsBytes(const String* s, const char sub[], size_t subLen)
+{
+	for (size_t i = 0; i <= s->length - subLen; ++i)
+	{
+		if (memcmp(s->data + i, sub, subLen) == 0) return true;
+	}
+	return false;
+}
+
+bool ContainsSubstring(const String* s, const String* sub)
+{
+	if (s == NULL || sub == NULL) return false;
+
+	if (sub->data == NULL || sub->length == 0) return true;
+	if (s->data == NULL || s->length == 0) return false;
+
+	if (sub->length > s->length) return false;
+
+	return StringContainsBytes(s, sub->data, sub->length);
+}
+
+bool ContainsCStr(const String* s, const char sub[])
+{
+	if (s == NULL || sub == NULL) return false;
+
+	size_t subLen = strlen(sub);
+	if (subLen == 0) return true;
+	if (s->data == NULL || s->length == 0) return false;
+
+	if (subLen > s->length) return false;
+
+	return StringContainsBytes(s, sub, subLen);
 }
