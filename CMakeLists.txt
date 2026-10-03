@@ -1,7 +1,7 @@
 ﻿# CMakeList.txt : CMake project for CProjectBase, include source and define
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.13)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
@@ -9,10 +9,10 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-project ("CProjectBase")
+project (CProjectBase LANGUAGES C)
 
 # Add source to this project's executable.
-add_executable (CProjectBase "CProjectBase.cpp" "CProjectBase.h")
+add_executable (CProjectBase  "main.c" "include/m_string.h" "src/m_string.c")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CProjectBase PROPERTY CXX_STANDARD 20)
