@@ -71,7 +71,8 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 
 	Bounds Checking:
 	Trimming and extracting functions will clamp indices within the length of the String.
-	Data access functions, eg. CharAt(), will return an error code of M_FAILURE_GEN (1) in case of an out-of-range index.
+	Data access functions, eg. CharAt(), will return a null terminator (\0) character if the return is a single char
+	or an empty String with a NULL data buffer in case of an out-of-range index.
 	Out-of-order index arguments, eg. start > end, will return an error code of M_FAILURE_GEN (1).
 */
 
@@ -83,6 +84,10 @@ String CreateString(const char s[]);
 int DestroyString(String* s);
 // Clears the data of a String
 int ClearString(String* s);
+// Move data from one String to another
+// Destroys the source string when successful
+// No-op if destination and source are the same String
+int MoveString(String* dest, String* source);
 // Create a new String struct from an existing String
 // Returned String is owned by and must be destroyed by caller
 String CopyString(const String* s);
@@ -97,6 +102,11 @@ int CopyCStrToString(String* dest, const char source[]);
 StringSplit CreateStringSplit(void);
 // Free all memory used by a StringSplit
 int DestroyStringSplit(StringSplit* split);
+
+// Get a copy of the character at a given index in a String
+char GetCharAt(const String* s, size_t index);
+// Set a character at a given index in a String
+int SetCharAt(String* s, size_t index, char chara);
 
 // Print data of a String
 int PrintString(const String* s);

@@ -79,6 +79,21 @@ int ClearString(String* s)
 	return M_SUCCESS;
 }
 
+int MoveString(String* dest, String* source)
+{
+	if (dest == NULL || source == NULL) return M_FAILURE_GEN;
+	if (dest == source) return M_SUCCESS;
+
+	if (GrowString(dest, source->length) != M_SUCCESS) return M_FAILURE_GEN;
+
+	memcpy(dest->data, source->data, source->length);
+	dest->data[source->length] = '\0';
+	dest->length = source->length;
+
+	DestroyString(source); // cannot fail (source != NULL)
+	return M_SUCCESS;
+}
+
 String CopyString(const String* s)
 {
 	String copy = { NULL, 0, 0 };
@@ -148,6 +163,23 @@ int DestroyStringSplit(StringSplit* split)
 	DestroyString(&split->string1);
 	DestroyString(&split->string2);
 
+	return M_SUCCESS;
+}
+
+char GetCharAt(const String* s, size_t index)
+{
+	if (s == NULL) return '\0';
+	if (index >= s->length) return '\0';
+
+	return s->data[index];
+}
+
+int SetCharAt(String* s, size_t index, char chara)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (index >= s->length) return M_FAILURE_GEN;
+
+	s->data[index] = chara;
 	return M_SUCCESS;
 }
 
