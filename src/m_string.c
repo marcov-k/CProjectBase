@@ -1,8 +1,10 @@
 #include "../include/m_string.h"
-#include "../include/math_utils.h"
+#include "../include/m_contain.h"
+
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stddef.h>
 
 static int GrowString(String* s, size_t length)
 {
@@ -159,33 +161,45 @@ int PrintStringLn(const String* s)
 	return M_SUCCESS;
 }
 
+static int PointsInto(const char s[], size_t sLen, const char p[], size_t pLen, size_t* offOut)
+{
+	uintptr_t base = (uintptr_t)s, q = (uintptr_t)p;
+
+	if (q < base || q - base >= sLen) return M_CONT_NONE;
+
+	size_t off = (size_t)(q - base);
+	if (pLen > sLen - off) return M_CONT_PART;
+
+	*offOut = off;
+	return M_CONT_FULL;
+}
+
 static int PrependStringBytes(String* s, const char prepend[], size_t prependLen)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (prepend == NULL || prependLen == 0) return M_SUCCESS;
 
-	int status = M_SUCCESS;
-	char* temp = malloc(prependLen);
-	if (temp == NULL) goto FAILURE;
-	memcpy(temp, prepend, prependLen);
-
 	size_t length = s->length + prependLen;
-	if (GrowString(s, length) != M_SUCCESS) goto FAILURE;
 
+	size_t off;
+	int contained = PointsInto(s->data, s->length, prepend, prependLen, &off);
+	if (contained == M_CONT_PART) return M_FAILURE_GEN;
+
+	if (GrowString(s, length) != M_SUCCESS) return M_FAILURE_GEN;
 	memmove(s->data + prependLen, s->data, s->length);
-	memmove(s->data, temp, prependLen);
+
+	if (contained == M_CONT_FULL) // prepend string is contained in target String
+	{
+		memmove(s->data, s->data + prependLen + off, prependLen);
+	}
+	else
+	{
+		memmove(s->data, prepend, prependLen);
+	}
 	s->data[length] = '\0';
 	s->length = length;
 
-	goto CLEAN_UP;
-
-FAILURE:
-	status = M_FAILURE_GEN;
-
-CLEAN_UP:
-	if (temp != NULL) free(temp);
-	
-	return status;
+	return M_SUCCESS;
 }
 
 int PrependString(String* s, const String* prepend)
@@ -207,27 +221,26 @@ static int AppendStringBytes(String* s, const char append[], size_t appendLen)
 	if (s == NULL) return M_FAILURE_GEN;
 	if (append == NULL || appendLen == 0) return M_SUCCESS;
 
-	int status = M_SUCCESS;
-	char* temp = malloc(appendLen);
-	if (temp == NULL) goto FAILURE;
-	memcpy(temp, append, appendLen);
-
 	size_t length = s->length + appendLen;
-	if (GrowString(s, length) != M_SUCCESS) goto FAILURE;
 
-	memmove(s->data + s->length, temp, appendLen);
+	size_t off;
+	int contained = PointsInto(s->data, s->length, append, appendLen, &off);
+	if (contained == M_CONT_PART) return M_FAILURE_GEN;
+
+	if (GrowString(s, length) != M_SUCCESS) return M_FAILURE_GEN;
+
+	if (contained == M_CONT_FULL) // append string is contained in target String
+	{
+		memmove(s->data + s->length, s->data + off, appendLen);
+	}
+	else
+	{
+		memmove(s->data + s->length, append, appendLen);
+	}
 	s->data[length] = '\0';
 	s->length = length;
 
-	goto CLEAN_UP;
-
-FAILURE:
-	status = M_FAILURE_GEN;
-
-CLEAN_UP:
-	if (temp != NULL) free(temp);
-
-	return status;
+	return M_SUCCESS;
 }
 
 int AppendString(String* s, const String* append)
