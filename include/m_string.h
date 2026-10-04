@@ -71,8 +71,9 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 
 	Bounds Checking:
 	Trimming and extracting functions will clamp indices within the length of the String.
-	Data access functions, eg. CharAt(), will return a null terminator (\0) character if the return is a single char
-	or an empty String with a NULL data buffer in case of an out-of-range index.
+	Data access functions returning by value, eg. GetCharAt(), will return a null terminator (\0) character if the return is a single char
+	or an empty String with a NULL data buffer in case of an out-of-range index or other failure.
+	Data access functions returning pointers, eg. GetCharPtrAt(), will return a NULL pointer in case of an out-of-range index or other failure.
 	Out-of-order index arguments, eg. start > end, will return an error code of M_FAILURE_GEN (1).
 */
 
@@ -105,6 +106,8 @@ int DestroyStringSplit(StringSplit* split);
 
 // Get a copy of the character at a given index in a String
 char GetCharAt(const String* s, size_t index);
+// Get a pointer to the character at a given index in a String
+char* GetCharPtrAt(const String* s, size_t index);
 // Set a character at a given index in a String
 int SetCharAt(String* s, size_t index, char chara);
 

@@ -160,8 +160,8 @@ int DestroyStringSplit(StringSplit* split)
 {
 	if (split == NULL) return M_FAILURE_GEN;
 
-	DestroyString(&split->string1);
-	DestroyString(&split->string2);
+	DestroyString(&split->string1); // StringSplit still successfully destroyed if string1 == NULL
+	DestroyString(&split->string2); // StringSplit still successfully destroyed if string2 == NULL
 
 	return M_SUCCESS;
 }
@@ -172,6 +172,14 @@ char GetCharAt(const String* s, size_t index)
 	if (index >= s->length) return '\0';
 
 	return s->data[index];
+}
+
+char* GetCharPtrAt(const String* s, size_t index)
+{
+	if (s == NULL) return NULL;
+	if (index >= s->length) return NULL;
+
+	return s->data + index;
 }
 
 int SetCharAt(String* s, size_t index, char chara)
