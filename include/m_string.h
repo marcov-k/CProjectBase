@@ -24,6 +24,10 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 	Functions will treat empty Strings with NULL and non-NULL data buffers as equivalent, except when
 	returning a new String under failure conditions wherein a NULL data buffer will be returned.
 
+
+	Copies:
+	Shallow copies are not supported under any conditions.
+
 	
 	Valid Strings:
 	Every String must be initialized (zeroed or created) before use.
@@ -60,6 +64,7 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 		- Append self
 		- Concat with destination equal to an operand
 		- Extract substring into the same String
+		- Split String aliasing a member String of the given StringSplit
 
 	Other aliasing cases should be assumed unsupported.
 
@@ -117,7 +122,6 @@ int ConcatCStrString(String* dest, const char s1[], const String* s2);
 // Reverse characters of a String in place
 int ReverseString(String* s);
 // Split a String at an index
-// Source String must not be either of the Strings contained in the provided StringSplit
 // The provided StringSplit must have valid initialization - either from CreateStringSplit() or a previous SplitString() call
 int SplitString(StringSplit* split, const String* s, size_t index);
 // Trim characters from start of a String

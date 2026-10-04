@@ -1,10 +1,13 @@
 #include "../include/m_string.h"
+
 #include "../include/m_contain.h"
 
-#include <string.h>
-#include <stdarg.h>
-#include <stdio.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static int GrowString(String* s, size_t length)
 {
@@ -12,8 +15,13 @@ static int GrowString(String* s, size_t length)
 	if (s->data != NULL && s->capacity >= length) return M_SUCCESS;
 
 	size_t capacity = max(s->capacity, 1);
-	while (capacity < length) capacity *= 2;
+	while (capacity < length)
+	{
+		if (capacity > SIZE_MAX / 2) return M_FAILURE_GEN;
+		capacity *= 2;
+	}
 
+	if (capacity > SIZE_MAX - 1) return M_FAILURE_GEN;
 	char* newBuffer = realloc(s->data, capacity + 1);
 	if (newBuffer == NULL) return M_FAILURE_GEN;
 
@@ -63,7 +71,7 @@ int DestroyString(String* s)
 int ClearString(String* s)
 {
 	if (s == NULL) return M_FAILURE_GEN;
-	if (s->data == NULL) return M_SUCCESS;
+	if (GrowString(s, 0) != M_SUCCESS) return M_FAILURE_GEN;
 
 	s->data[0] = '\0';
 	s->length = 0;
@@ -94,7 +102,7 @@ int CopyStringTo(String* dest, const String* source)
 
 	if (source->data == NULL || source->length == 0)
 	{
-		ClearString(dest);
+		if (ClearString(dest) != M_SUCCESS) return M_FAILURE_GEN;
 		return M_SUCCESS;
 	}
 
@@ -114,7 +122,7 @@ int CopyCStrToString(String* dest, const char source[])
 	size_t length = strlen(source);
 	if (length == 0)
 	{
-		ClearString(dest);
+		if (ClearString(dest) != M_SUCCESS) return M_FAILURE_GEN;
 		return M_SUCCESS;
 	}
 
@@ -147,7 +155,7 @@ int PrintString(const String* s)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 
-	printf("%s", s->data);
+	printf("%s", s->data ? s->data : "");
 
 	return M_SUCCESS;
 }
@@ -156,13 +164,15 @@ int PrintStringLn(const String* s)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 
-	printf("%s\n", s->data);
+	printf("%s\n", s->data ? s->data : "");
 
 	return M_SUCCESS;
 }
 
 static int PointsInto(const char s[], size_t sLen, const char p[], size_t pLen, size_t* offOut)
 {
+	if (p == NULL) return M_CONT_NONE;
+
 	uintptr_t base = (uintptr_t)s, q = (uintptr_t)p;
 
 	if (q < base || q - base >= sLen) return M_CONT_NONE;
@@ -179,11 +189,13 @@ static int PrependStringBytes(String* s, const char prepend[], size_t prependLen
 	if (s == NULL) return M_FAILURE_GEN;
 	if (prepend == NULL || prependLen == 0) return M_SUCCESS;
 
+	if (s->length > SIZE_MAX - prependLen) return M_FAILURE_GEN;
 	size_t length = s->length + prependLen;
 
 	size_t off;
-	int contained = PointsInto(s->data, s->length, prepend, prependLen, &off);
+	int contained = PointsInto(s->data, s->capacity + 1, prepend, prependLen, &off);
 	if (contained == M_CONT_PART) return M_FAILURE_GEN;
+	if (contained == M_CONT_FULL && off + prependLen > s->length) return M_FAILURE_GEN;
 
 	if (GrowString(s, length) != M_SUCCESS) return M_FAILURE_GEN;
 	memmove(s->data + prependLen, s->data, s->length);
@@ -221,10 +233,11 @@ static int AppendStringBytes(String* s, const char append[], size_t appendLen)
 	if (s == NULL) return M_FAILURE_GEN;
 	if (append == NULL || appendLen == 0) return M_SUCCESS;
 
+	if (s->length > SIZE_MAX - appendLen) return M_FAILURE_GEN;
 	size_t length = s->length + appendLen;
 
 	size_t off;
-	int contained = PointsInto(s->data, s->length, append, appendLen, &off);
+	int contained = PointsInto(s->data, s->capacity + 1, append, appendLen, &off);
 	if (contained == M_CONT_PART) return M_FAILURE_GEN;
 
 	if (GrowString(s, length) != M_SUCCESS) return M_FAILURE_GEN;
@@ -257,73 +270,106 @@ int AppendCStr(String* s, const char append[])
 	return AppendStringBytes(s, append, strlen(append));
 }
 
-static int ConcatCStrings(String* dest, const char s1[], size_t s1Len, const char s2[], size_t s2Len)
+static int ConcatCStrings(String* dest, const char s1[], size_t s1Len, const char s2[], size_t s2Len) // Length parameters must be 0 for NULL pointers
 {
 	if (dest == NULL) return M_FAILURE_GEN;
 
-	int status = M_SUCCESS;
-	char *temp1 = NULL, *temp2 = NULL;
+	size_t s1Off = 0;
+	size_t s2Off = 0;
+	int s1Contained = PointsInto(dest->data, dest->capacity + 1, s1, s1Len, &s1Off);
+	int s2Contained = PointsInto(dest->data, dest->capacity + 1, s2, s2Len, &s2Off);
 
-	if (s1 != NULL && s1Len > 0 && s2 != NULL && s2Len > 0)
+	if (s1Contained == M_CONT_PART || s2Contained == M_CONT_PART) return M_FAILURE_GEN;
+	if (s1Len == 0) s1Contained = M_CONT_NONE;
+	if (s2Len == 0) s2Contained = M_CONT_NONE;
+
+	bool bothContained = s1Contained == M_CONT_FULL && s1Len > 0 && s2Contained == M_CONT_FULL && s2Len > 0;
+	bool swapRequired = bothContained && s2Off < s1Len && s1Off != 0 && s1Off < s1Len + s2Len;
+
+	if (s1Len > SIZE_MAX - s2Len) return M_FAILURE_GEN;
+	size_t length = s1Len + s2Len;
+
+	bool s1Stored = false;
+	char* temp = NULL;
+	if (swapRequired)
 	{
-		temp1 = malloc(s1Len);
-		if (temp1 == NULL) goto FAILURE;
-		
-		temp2 = malloc(s2Len);
-		if (temp2 == NULL) goto FAILURE;
+		if (s1Len <= s2Len)
+		{
+			temp = malloc(s1Len);
+			if (temp == NULL) return M_FAILURE_GEN;
 
-		memcpy(temp1, s1, s1Len);
-		memcpy(temp2, s2, s2Len);
+			memcpy(temp, s1, s1Len);
+			s1Stored = true;
+		}
+		else
+		{
+			temp = malloc(s2Len);
+			if (temp == NULL) return M_FAILURE_GEN;
 
-		size_t length = s1Len + s2Len;
-		if (GrowString(dest, length) != M_SUCCESS) goto FAILURE;
+			memcpy(temp, s2, s2Len);
+			s1Stored = false;
+		}
+	}
 
-		memcpy(dest->data, temp1, s1Len);
-		memcpy(dest->data + s1Len, temp2, s2Len);
+	if (GrowString(dest, length) != M_SUCCESS) goto STRING_FAILURE;
+
+	if (bothContained)
+	{
+		if (swapRequired)
+		{
+			if (s1Stored)
+			{
+				memmove(dest->data + s1Len, dest->data + s2Off, s2Len);
+				memcpy(dest->data, temp, s1Len);
+			}
+			else
+			{
+				memmove(dest->data, dest->data + s1Off, s1Len);
+				memcpy(dest->data + s1Len, temp, s2Len);
+			}
+			free(temp);
+		}
+		else
+		{
+			if (s2Off >= s1Len)
+			{
+				memmove(dest->data, dest->data + s1Off, s1Len);
+				memmove(dest->data + s1Len, dest->data + s2Off, s2Len);
+			}
+			else
+			{
+				memmove(dest->data + s1Len, dest->data + s2Off, s2Len);
+				memmove(dest->data, dest->data + s1Off, s1Len);
+			}
+		}
 		dest->data[length] = '\0';
 		dest->length = length;
+		return M_SUCCESS;
 	}
-	else if (s1 != NULL && s1Len > 0)
+
+	if (s1Contained == M_CONT_FULL)
 	{
-		temp1 = malloc(s1Len);
-		if (temp1 == NULL) goto FAILURE;
-
-		memcpy(temp1, s1, s1Len);
-
-		if (GrowString(dest, s1Len) != M_SUCCESS) goto FAILURE;
-
-		memcpy(dest->data, temp1, s1Len);
-		dest->data[s1Len] = '\0';
-		dest->length = s1Len;
+		memmove(dest->data, dest->data + s1Off, s1Len);
+		if (s2Len > 0) memcpy(dest->data + s1Len, s2, s2Len);
 	}
-	else if (s2 != NULL && s2Len > 0)
+	else if (s2Contained == M_CONT_FULL)
 	{
-		temp2 = malloc(s2Len);
-		if (temp2 == NULL) goto FAILURE;
-
-		memcpy(temp2, s2, s2Len);
-
-		if (GrowString(dest, s2Len) != M_SUCCESS) goto FAILURE;
-
-		memcpy(dest->data, temp2, s2Len);
-		dest->data[s2Len] = '\0';
-		dest->length = s2Len;
+		memmove(dest->data + s1Len, dest->data + s2Off, s2Len);
+		if (s1Len > 0) memcpy(dest->data, s1, s1Len);
 	}
 	else
 	{
-		ClearString(dest);
+		if (s1Len > 0) memcpy(dest->data, s1, s1Len);
+		if (s2Len > 0) memcpy(dest->data + s1Len, s2, s2Len);
 	}
 
-	goto CLEAN_UP;
+	dest->data[length] = '\0';
+	dest->length = length;
+	return M_SUCCESS;
 
-FAILURE:
-	status = M_FAILURE_GEN;
-
-CLEAN_UP:
-	if (temp1 != NULL) free(temp1);
-	if (temp2 != NULL) free(temp2);
-
-	return status;
+STRING_FAILURE:
+	if (temp != NULL) free(temp);
+	return M_FAILURE_GEN;
 }
 
 int ConcatStrings(String* dest, const String* s1, const String* s2)
@@ -369,46 +415,20 @@ int SplitString(StringSplit* split, const String* s, size_t index)
 {
 	if (split == NULL || s == NULL) return M_FAILURE_GEN;
 
-	if (s->data == NULL)
-	{
-		ClearString(&split->string1);
-		ClearString(&split->string2);
-		return M_SUCCESS;
-	}
+	size_t length = s->length;
+	size_t len1 = index < length ? index : length;
+	size_t len2 = length - len1;
 
-	if (index >= s->length)
-	{
-		if (GrowString(&split->string1, s->length) != M_SUCCESS) return M_FAILURE_GEN;
+	if (GrowString(&split->string1, len1) != M_SUCCESS) return M_FAILURE_GEN;
+	if (GrowString(&split->string2, len2) != M_SUCCESS) return M_FAILURE_GEN;
 
-		ClearString(&split->string2);
+	if (len1 > 0) memmove(split->string1.data, s->data, len1);
+	if (len2 > 0) memmove(split->string2.data, s->data + len1, len2);
 
-		memmove(split->string1.data, s->data, s->length);
-		split->string1.data[s->length] = '\0';
-		split->string1.length = s->length;
-	}
-	else if (index == 0)
-	{
-		if (GrowString(&split->string2, s->length) != M_SUCCESS) return M_FAILURE_GEN;
-
-		ClearString(&split->string1);
-
-		memmove(split->string2.data, s->data, s->length);
-		split->string2.data[s->length] = '\0';
-		split->string2.length = s->length;
-	}
-	else
-	{
-		if (GrowString(&split->string1, index) != M_SUCCESS) return M_FAILURE_GEN;
-		if (GrowString(&split->string2, s->length - index) != M_SUCCESS) return M_FAILURE_GEN;
-
-		memmove(split->string1.data, s->data, index);
-		split->string1.data[index] = '\0';
-		split->string1.length = index;
-
-		memmove(split->string2.data, s->data + index, s->length - index);
-		split->string2.data[s->length - index] = '\0';
-		split->string2.length = s->length - index;
-	}
+	split->string1.data[len1] = '\0';
+	split->string1.length = len1;
+	split->string2.data[len2] = '\0';
+	split->string2.length = len2;
 
 	return M_SUCCESS;
 }
@@ -420,7 +440,7 @@ int TrimStringStart(String* s, size_t count)
 
 	if (count >= s->length)
 	{
-		ClearString(s);
+		if (ClearString(s) != M_SUCCESS) return M_FAILURE_GEN;
 		return M_SUCCESS;
 	}
 
@@ -438,7 +458,7 @@ int TrimStringEnd(String* s, size_t count)
 
 	if (count >= s->length)
 	{
-		ClearString(s);
+		if (ClearString(s) != M_SUCCESS) return M_FAILURE_GEN;
 		return M_SUCCESS;
 	}
 
@@ -458,7 +478,7 @@ int TrimString(String* s, size_t start, size_t end)
 
 	if (start >= s->length)
 	{
-		ClearString(s);
+		if (ClearString(s) != M_SUCCESS) return M_FAILURE_GEN;
 		return M_SUCCESS;
 	}
 	end = min(end, s->length);
@@ -479,7 +499,7 @@ int ExtractSubstring(String* dest, const String* s, size_t start, size_t end)
 
 	if (s->data == NULL)
 	{
-		ClearString(dest);
+		if (ClearString(dest) != M_SUCCESS) return M_FAILURE_GEN;
 		return M_SUCCESS;
 	}
 	if (start == 0 && end >= s->length)
@@ -489,7 +509,7 @@ int ExtractSubstring(String* dest, const String* s, size_t start, size_t end)
 
 	if (start >= s->length)
 	{
-		ClearString(dest);
+		if (ClearString(dest) != M_SUCCESS) return M_FAILURE_GEN;
 		return M_SUCCESS;
 	}
 
@@ -534,6 +554,8 @@ bool StringsEqualCStr(const String* s1, const char s2[])
 
 static bool StringContainsBytes(const String* s, const char sub[], size_t subLen)
 {
+	if (s->length < subLen) return false;
+
 	for (size_t i = 0; i <= s->length - subLen; ++i)
 	{
 		if (memcmp(s->data + i, sub, subLen) == 0) return true;
