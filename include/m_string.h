@@ -1,16 +1,9 @@
 #ifndef M_STRING_H
 #define M_STRING_H
 
+#include "m_result.h"
 #include <stdlib.h>
 #include <stdbool.h>
-
-#ifndef M_SUCCESS
-#define M_SUCCESS 0
-#endif
-
-#ifndef M_FAILURE
-#define M_FAILURE_GEN 1
-#endif
 
 typedef struct [[nodiscard("String owns heap memory; the result must be stored and destroyed")]] String
 {
@@ -42,6 +35,9 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 
 	Return Values and Failure Guarantees:
 	A return value of M_SUCCESS (0) indicates success; M_FAILURE_GEN (1) indicates failure.
+	For functions returning an index, the index of the null terminator (length + 1) will be returned
+	in case of a failure of any kind (eg. a substring not being present, etc.).
+
 	A failure is defined as any function and/or operation not succeeding completely.
 
 	All functions returning new structs, eg. a new String, will return an empty struct with a NULL data buffer in case of failure;
