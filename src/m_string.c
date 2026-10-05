@@ -53,17 +53,19 @@ String CreateString(const char s[])
 	return string;
 }
 
-int DestroyString(String* s)
+int DestroyString(void* s)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 
-	if (s->data != NULL) // only free memory if allocated
+	String* sPtr = (String*)s;
+
+	if (sPtr->data != NULL) // only free memory if allocated
 	{
-		free(s->data);
-		s->data = NULL;
+		free(sPtr->data);
+		sPtr->data = NULL;
 	}
-	s->capacity = 0;
-	s->length = 0;
+	sPtr->capacity = 0;
+	sPtr->length = 0;
 
 	return M_SUCCESS;
 }

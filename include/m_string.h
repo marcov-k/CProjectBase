@@ -83,7 +83,7 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 // Returned String is owned by and must be destroyed by caller
 String CreateString(const char s[]);
 // Free all heap memory used by a String
-int DestroyString(String* s);
+int DestroyString(void* s);
 // Clears the data of a String
 int ClearString(String* s);
 // Move data from one String to another
