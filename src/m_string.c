@@ -1,5 +1,6 @@
 #include "../include/m_string.h"
 
+#include "../include/m_result.h"
 #include "../include/m_contain.h"
 
 #include <stdbool.h>
@@ -111,23 +112,26 @@ String CopyString(const String* s)
 	return copy;
 }
 
-int CopyStringTo(String* dest, const String* source)
+int CopyStringTo(void* dest, const void* source)
 {
 	if (dest == NULL || source == NULL) return M_FAILURE_GEN;
 
 	if (dest == source) return M_SUCCESS;
 
-	if (source->data == NULL || source->length == 0)
+	String* destStr = (String*)dest;
+	String* sourceStr = (String*)source;
+
+	if (sourceStr->length == 0)
 	{
-		if (ClearString(dest) != M_SUCCESS) return M_FAILURE_GEN;
+		if (ClearString(destStr) != M_SUCCESS) return M_FAILURE_GEN;
 		return M_SUCCESS;
 	}
 
-	if (GrowString(dest, source->length) != M_SUCCESS) return M_FAILURE_GEN;
+	if (GrowString(destStr, sourceStr->length) != M_SUCCESS) return M_FAILURE_GEN;
 
-	memcpy(dest->data, source->data, source->length);
-	dest->data[source->length] = '\0';
-	dest->length = source->length;
+	memcpy(destStr->data, sourceStr->data, sourceStr->length);
+	destStr->data[sourceStr->length] = '\0';
+	destStr->length = sourceStr->length;
 
 	return M_SUCCESS;
 }
@@ -438,7 +442,7 @@ int ConcatCStrString(String* dest, const char s1[], const String* s2)
 int ReverseString(String* s)
 {
 	if (s == NULL) return M_FAILURE_GEN;
-	if (s->length == 0) return M_SUCCESS;
+	if (s->length < 2) return M_SUCCESS;
 
 	size_t halfLen = s->length / 2;
 	for (size_t i = 0; i < halfLen; ++i)
@@ -567,15 +571,18 @@ int ExtractSubstring(String* dest, const String* s, size_t start, size_t end)
 	return M_SUCCESS;
 }
 
-bool StringsEqual(const String* s1, const String* s2)
+bool StringsEqual(const void* s1, const void* s2)
 {
 	if (s1 == NULL || s2 == NULL) return false;
 
-	if ((s1->data == NULL || s1->length == 0) && (s2->data == NULL || s2->length == 0)) return true;
+	String* s1Str = (String*)s1;
+	String* s2Str = (String*)s2;
 
-	if (s1->length != s2->length) return false;
+	if ((s1Str->data == NULL || s1Str->length == 0) && (s2Str->data == NULL || s2Str->length == 0)) return true;
 
-	if (memcmp(s1->data, s2->data, s1->length) == 0) return true;
+	if (s1Str->length != s2Str->length) return false;
+
+	if (memcmp(s1Str->data, s2Str->data, s1Str->length) == 0) return true;
 
 	return false;
 }

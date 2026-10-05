@@ -2,17 +2,18 @@
 #define M_STRING_H
 
 #include "m_result.h"
+
 #include <stdlib.h>
 #include <stdbool.h>
 
-typedef struct [[nodiscard("String owns heap memory; the result must be stored and destroyed")]] String
+typedef struct [[nodiscard("String owns heap memory; the result must be stored and destroyed")]]
 {
 	char* data;
 	size_t length;
 	size_t capacity;
 } String;
 
-typedef struct [[nodiscard("StringSplit owns heap memory; the result must be stored and destroyed")]] StringSplit
+typedef struct [[nodiscard("StringSplit owns heap memory; the result must be stored and destroyed")]]
 {
 	String string1;
 	String string2;
@@ -28,14 +29,14 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 	Copies:
 	Shallow copies are not supported under any conditions.
 
-	
+
 	Valid Strings:
 	Every String must be initialized (zeroed or created) before use.
 	Valid Strings obey the following invariants:
 		- NULL data implies 0 length and 0 capacity
 		- Length never exceeds capacity
 		- A non-NULL buffer is always terminated at length
-	
+
 
 	Return Values and Failure Guarantees:
 	A return value of M_SUCCESS (0) indicates success; M_FAILURE_GEN (1) indicates failure.
@@ -84,19 +85,19 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 String CreateString(const char s[]);
 // Free all heap memory used by a String
 int DestroyString(void* s);
-// Clears the data of a String
+// Clear the data of a String
 int ClearString(String* s);
 // Move data from one String to another
-// Destroys the source string when successful
+// Destroys the source String when successful
 // No-op if destination and source are the same String
 int MoveString(String* dest, String* source);
 // Create a new String struct from an existing String
 // Returned String is owned by and must be destroyed by caller
 String CopyString(const String* s);
 // Copy data from one String to another
-int CopyStringTo(String* dest, const String* source);
+int CopyStringTo(void* dest, const void* source);
 // Copy data from C-style string to a String
-// Source C-strings points into the dest String are unsupported
+// Source C-strings pointing into the dest String are unsupported
 int CopyCStrToString(String* dest, const char source[]);
 
 // Create a new zero-initialized StringSplit struct
@@ -148,7 +149,7 @@ int TrimString(String* s, size_t start, size_t end);
 int ExtractSubstring(String* dest, const String* s, size_t start, size_t end);
 
 // Check whether two Strings are exactly equal
-bool StringsEqual(const String* s1, const String* s2);
+bool StringsEqual(const void* s1, const void* s2);
 // Check whether a String and a C-string are exactly equal
 bool StringsEqualCStr(const String* s1, const char s2[]);
 // Check whether a String contains another String
