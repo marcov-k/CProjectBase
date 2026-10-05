@@ -160,5 +160,17 @@ bool ContainsCStr(const String* s, const char sub[]);
 int RemoveCharAt(String* s, size_t index);
 // Remove a range from a String
 int RemoveStringRange(String* s, size_t start, size_t length);
+// Remove the first instance of a character from a String
+int RemoveCharFirst(String* s, char chara);
+// Remove all instances of a character from a String
+int RemoveCharAll(String* s, char chara);
+// Remove the first instance of a substring from a String
+int RemoveSubstringFirst(String* s, const String* substring);
+// Remove all instances of a substring from a String.
+int RemoveSubstringAll(String* s, const String* substring);
+// Remove the first instance of a C-string from a String
+int RemoveCStrFirst(String* s, const char substring[]);
+// Remove all instances of a C-string from a String
+int RemoveCStrAll(String* s, const char substring[]);
 
 #endif

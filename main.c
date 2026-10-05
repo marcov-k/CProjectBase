@@ -11,9 +11,8 @@ int main()
 	printf("Copied string: ");
 	PrintStringLn(&s2);
 
-	size_t start = 5, length = 6;
-	RemoveStringRange(&s2, start, length);
-	printf("\nRange from index %zu to %zu removed: ", start, start + length - 1);
+	RemoveCharAll(&s2, 'l');
+	printf("\nRemoved every \'l\': ");
 	PrintStringLn(&s2);
 
 	ReverseString(&s);

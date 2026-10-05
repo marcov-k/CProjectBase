@@ -220,7 +220,7 @@ static int PointsInto(const char s[], size_t sLen, const char p[], size_t pLen, 
 	size_t off = (size_t)(q - base);
 	if (pLen > sLen - off) return M_CONT_PART;
 
-	*offOut = off;
+	if (offOut != NULL) *offOut = off;
 	return M_CONT_FULL;
 }
 
@@ -654,4 +654,156 @@ int RemoveStringRange(String* s, size_t start, size_t length)
 	s->length -= length;
 
 	return M_SUCCESS;
+}
+
+int RemoveCharFirst(String* s, char chara)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (s->length == 0) return M_SUCCESS;
+
+	for (size_t i = 0; i < s->length; ++i)
+	{
+		if (s->data[i] == chara)
+		{
+			size_t moveLength = s->length - i - 1;
+			memmove(s->data + i, s->data + i + 1, moveLength);
+			s->data[s->length - 1] = '\0';
+			s->length--;
+			break;
+		}
+	}
+
+	return M_SUCCESS;
+}
+
+int RemoveCharAll(String* s, char chara)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (s->length == 0) return M_SUCCESS;
+
+	size_t sLen = s->length, removed = 0;
+	for (size_t i = 0; i < sLen; ++i)
+	{
+		size_t dataIndex = i - removed;
+		if (s->data[dataIndex] == chara)
+		{
+			size_t moveLength = s->length - dataIndex - 1;
+			memmove(s->data + dataIndex, s->data + dataIndex + 1, moveLength);
+			s->data[s->length - 1] = '\0';
+			s->length--;
+			removed++;
+		}
+	}
+
+	return M_SUCCESS;
+}
+
+static int RemoveCStrFromStringFirst(String* s, const char sub[], size_t subLen)
+{
+	if (s == NULL || sub == NULL) return M_FAILURE_GEN;
+	if (s->length == 0 || subLen == 0) return M_SUCCESS;
+	if (subLen > s->length) return M_SUCCESS;
+
+	for (size_t i = 0; i <= s->length - subLen; ++i)
+	{
+		if (memcmp(s->data + i, sub, subLen) == 0)
+		{
+			size_t moveLength = s->length - i - subLen;
+			memmove(s->data + i, s->data + i + subLen, moveLength);
+			s->data[s->length - subLen] = '\0';
+			s->length -= subLen;
+			break;
+		}
+	}
+
+	return M_SUCCESS;
+}
+
+static int RemoveCStrFromStringAll(String* s, const char sub[], size_t subLen)
+{
+	if (s == NULL || sub == NULL) return M_FAILURE_GEN;
+	if (s->length == 0 || subLen == 0) return M_SUCCESS;
+	if (subLen > s->length) return M_SUCCESS;
+
+	int contained = PointsInto(s->data, s->length, sub, subLen, NULL);
+	if (contained == M_CONT_PART) return M_FAILURE_GEN;
+
+	const char* compare = sub;
+
+	char* subTemp = NULL;
+	if (contained == M_CONT_FULL)
+	{
+		subTemp = malloc(subLen);
+		if (subTemp == NULL) return M_FAILURE_GEN;
+		
+		memcpy(subTemp, sub, subLen);
+		compare = subTemp;
+	}
+
+	for (size_t i = 0; i <= s->length - subLen; ++i)
+	{
+		if (memcmp(s->data + i, compare, subLen))
+		{
+			size_t moveLength = s->length - i - subLen;
+			memmove(s->data + i, s->data + i + subLen, moveLength);
+			s->data[s->length - subLen] = '\0';
+			s->length -= subLen;
+			i--;
+		}
+	}
+
+	if (subTemp != NULL) free(subTemp);
+	return M_SUCCESS;
+}
+
+int RemoveSubstringFirst(String* s, const String* substring)
+{
+	if (s == NULL || substring == NULL) return M_FAILURE_GEN;
+	if (s->length == 0 || substring->length == 0) return M_SUCCESS;
+	if (substring->length > s->length) return M_SUCCESS;
+
+	if (s == substring)
+	{
+		if (ClearString(s) != M_SUCCESS) return M_FAILURE_GEN;
+		return M_SUCCESS;
+	}
+
+	return RemoveCStrFromStringFirst(s, substring->data, substring->length);
+}
+
+int RemoveSubstringAll(String* s, const String* substring)
+{
+	if (s == NULL || substring == NULL) return M_FAILURE_GEN;
+	if (s->length == 0 || substring->length == 0) return M_SUCCESS;
+	if (substring->length > s->length) return M_SUCCESS;
+
+	if (s == substring)
+	{
+		if (ClearString(s) != M_SUCCESS) return M_FAILURE_GEN;
+		return M_SUCCESS;
+	}
+
+	return RemoveCStrFromStringAll(s, substring->data, substring->length);
+}
+
+int RemoveCStrFirst(String* s, const char substring[])
+{
+	if (s == NULL || substring == NULL) return M_FAILURE_GEN;
+	
+	size_t substringLen = strlen(substring);
+	if (s->length == 0 || substringLen == 0) return M_SUCCESS;
+	if (substringLen > s->length) return M_SUCCESS;
+
+	return RemoveCStrFromStringFirst(s, substring, substringLen);
+}
+
+int RemoveCStrAll(String* s, const char substring[])
+{
+	if (s == NULL || substring == NULL) return M_FAILURE_GEN;
+
+	size_t substringLen = strlen(substring);
+	if (s->length == 0 || substringLen == 0) return M_SUCCESS;
+	if (substringLen > s->length) return M_SUCCESS;
+
+	return RemoveCStrFromStringAll(s, substring, substringLen);
 }
