@@ -742,7 +742,7 @@ static int RemoveCStrFromStringAll(String* s, const char sub[], size_t subLen)
 
 	for (size_t i = 0; i <= s->length - subLen; ++i)
 	{
-		if (memcmp(s->data + i, compare, subLen))
+		if (memcmp(s->data + i, compare, subLen) == 0)
 		{
 			size_t moveLength = s->length - i - subLen;
 			memmove(s->data + i, s->data + i + subLen, moveLength);
