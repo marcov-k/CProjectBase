@@ -29,7 +29,7 @@ int main()
 	printf("\nNumber vector created: ");
 	for (size_t i = 0; i < v.length; ++i)
 	{
-		int value = *(int*)GetElementAt(&v, i);
+		int value = deref(GetElementAt(&v, i), int);
 		printf("%d, ", value);
 	}
 

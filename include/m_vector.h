@@ -1,12 +1,14 @@
 #ifndef M_VECTOR_H
 #define M_VECTOR_H
 
+#include "m_deref.h"
+
 #include <stdlib.h>
 #include <stdbool.h>
 
 typedef int (*Destructor)(void*);
 typedef int (*Copier)(void*, const void*);
-typedef bool (*Equality)(const void*, const void*);
+typedef bool (*Comparer)(const void*, const void*);
 
 typedef struct [[nodiscard("Vector owns heap memory; the result must be stored and destroyed")]]
 {
