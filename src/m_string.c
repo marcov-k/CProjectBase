@@ -436,7 +436,7 @@ int ConcatCStrString(String* dest, const char s1[], const String* s2)
 int ReverseString(String* s)
 {
 	if (s == NULL) return M_FAILURE_GEN;
-	if (s->data == NULL || s->length == 0) return M_SUCCESS;
+	if (s->length == 0) return M_SUCCESS;
 
 	size_t halfLen = s->length / 2;
 	for (size_t i = 0; i < halfLen; ++i)
@@ -626,4 +626,32 @@ bool ContainsCStr(const String* s, const char sub[])
 	if (subLen > s->length) return false;
 
 	return StringContainsBytes(s, sub, subLen);
+}
+
+int RemoveCharAt(String* s, size_t index)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (index >= s->length) return M_FAILURE_GEN;
+
+	size_t moveLength = s->length - index - 1;
+	memmove(s->data + index, s->data + index + 1, moveLength);
+	s->data[s->length - 1] = '\0';
+	s->length--;
+
+	return M_SUCCESS;
+}
+
+int RemoveStringRange(String* s, size_t start, size_t length)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (start > SIZE_MAX - length) return M_FAILURE_GEN;
+	if (start + length >= s->length) return M_FAILURE_GEN;
+	if (length == 0) return M_SUCCESS;
+
+	size_t moveLength = s->length - start - length;
+	memmove(s->data + start, s->data + start + length, moveLength);
+	s->data[s->length - length] = '\0';
+	s->length -= length;
+
+	return M_SUCCESS;
 }

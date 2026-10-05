@@ -71,6 +71,7 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 
 	Bounds Checking:
 	Trimming and extracting functions will clamp indices within the length of the String.
+	Removal functions will return M_FAILURE_GEN (1) in case of out-of-range indices.
 	Data access functions returning by value, eg. GetCharAt(), will return a null terminator (\0) character if the return is a single char
 	or an empty String with a NULL data buffer in case of an out-of-range index or other failure.
 	Data access functions returning pointers, eg. GetCharPtrAt(), will return a NULL pointer in case of an out-of-range index or other failure.
@@ -154,5 +155,10 @@ bool StringsEqualCStr(const String* s1, const char s2[]);
 bool ContainsSubstring(const String* s, const String* sub);
 // Check whether a String contains a C-string
 bool ContainsCStr(const String* s, const char sub[]);
+
+// Remove character from a String at a given index
+int RemoveCharAt(String* s, size_t index);
+// Remove a range from a String
+int RemoveStringRange(String* s, size_t start, size_t length);
 
 #endif
