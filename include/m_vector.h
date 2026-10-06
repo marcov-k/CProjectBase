@@ -109,12 +109,27 @@ int CopyDataToVector(Vector* dest, const void* source, size_t sourceLen, Copier 
 
 // Get a pointer to the element at a given index in a Vector
 void* GetElementAt(const Vector* v, size_t index);
+// Get a pointer to the first element in a Vector
+void* GetElementFirst(const Vector* v);
+// Get a pointer to the last element in a Vector
+void* GetElementLast(const Vector* v);
 // Set an element at a given index in a Vector
-// Element cannot point into the data buffer of the Vector
 int SetElementAt(Vector* v, size_t index, const void* item, Copier copier);
+// Set the first element in a Vector
+int SetElementFirst(Vector* v, const void* item, Copier copier);
+// Set the last element in a Vector
+int SetElementLast(Vector* v, const void* item, Copier copier);
 
+// Prepend an element to the start of a Vector
+int VectorPushFront(Vector* v, const void* item, Copier copier);
 // Append an element to the end of a Vector
-// Element cannot point into the data buffer of the Vector
-int VectorAppend(Vector* v, const void* item, Copier copier);
+int VectorPushBack(Vector* v, const void* item, Copier copier);
+
+// Remove an element at a given index from a Vector
+int VectorRemoveAt(Vector* v, size_t index);
+// Remove the first element in a Vector
+int VectorPopFront(Vector* v);
+// Remove the last element in a Vector
+int VectorPopBack(Vector* v);
 
 #endif

@@ -247,15 +247,30 @@ FAILURE:
 
 void* GetElementAt(const Vector* v, size_t index)
 {
-	if (v == NULL || v->itemSize == 0) return NULL;
+	if (v == NULL || v->itemSize == 0 || v->length == 0) return NULL;
 	if (index >= v->length) return NULL;
 
 	return (char*)v->data + index * v->itemSize;
 }
 
+void* GetElementFirst(const Vector* v)
+{
+	if (v == NULL || v->itemSize == 0 || v->length == 0) return NULL;
+
+	return v->data;
+}
+
+void* GetElementLast(const Vector* v)
+{
+	if (v == NULL || v->itemSize == 0 || v->length == 0) return NULL;
+
+	return (char*)v->data + (v->length - 1) * v->itemSize;
+}
+
 int SetElementAt(Vector* v, size_t index, const void* item, Copier copier)
 {
 	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
+	if (v->length == 0) return M_FAILURE_GEN;
 	if (index >= v->length) return M_FAILURE_GEN;
 
 	void* vPtr = (char*)v->data + index * v->itemSize;
@@ -271,7 +286,65 @@ int SetElementAt(Vector* v, size_t index, const void* item, Copier copier)
 	return M_SUCCESS;
 }
 
-int VectorAppend(Vector* v, const void* item, Copier copier)
+int SetElementFirst(Vector* v, const void* item, Copier copier)
+{
+	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
+	if (v->length == 0) return M_FAILURE_GEN;
+
+	if (copier == NULL)
+	{
+		memcpy(v->data, item, v->itemSize);
+	}
+	else
+	{
+		if (copier(v->data, item) != M_SUCCESS) return M_FAILURE_GEN;
+	}
+
+	return M_SUCCESS;
+}
+
+int SetElementLast(Vector* v, const void* item, Copier copier)
+{
+	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
+	if (v->length == 0) return M_FAILURE_GEN;
+
+	void* vPtr = (char*)v->data + (v->length - 1) * v->itemSize;
+	if (copier == NULL)
+	{
+		memcpy(vPtr, item, v->itemSize);
+	}
+	else
+	{
+		if (copier(vPtr, item) != M_SUCCESS) return M_FAILURE_GEN;
+	}
+
+	return M_SUCCESS;
+}
+
+int VectorPushFront(Vector* v, const void* item, Copier copier)
+{
+	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
+
+	if (v->length > SIZE_MAX - 1) return M_FAILURE_GEN;
+	if (GrowVector(v, v->length + 1) != M_SUCCESS) return M_FAILURE_GEN;
+
+	void* destPtr = (char*)v->data + v->itemSize;
+	memmove(destPtr, v->data, v->length * v->itemSize);
+
+	if (copier == NULL)
+	{
+		memcpy(v->data, item, v->itemSize);
+	}
+	else
+	{
+		if (copier(v->data, item) != M_SUCCESS) return M_FAILURE_GEN;
+	}
+	v->length++;
+
+	return M_SUCCESS;
+}
+
+int VectorPushBack(Vector* v, const void* item, Copier copier)
 {
 	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
 
@@ -288,6 +361,53 @@ int VectorAppend(Vector* v, const void* item, Copier copier)
 		if (copier(vPtr, item) != M_SUCCESS) return M_FAILURE_GEN;
 	}
 	v->length++;
+
+	return M_SUCCESS;
+}
+
+int VectorRemoveAt(Vector* v, size_t index)
+{
+	if (v == NULL || v->itemSize == 0 || v->length == 0) return M_FAILURE_GEN;
+	if (index >= v->length) return M_FAILURE_GEN;
+
+	void* dataPtr = (char*)v->data + index * v->itemSize;
+	if (v->destructor != NULL && v->destructor(dataPtr) != M_SUCCESS) return M_FAILURE_GEN;
+
+	size_t moveLength = (v->length - index - 1) * v->itemSize;
+	void* movePtr = (char*)dataPtr + v->itemSize;
+	memmove(dataPtr, movePtr, moveLength);
+	v->length--;
+
+	return M_SUCCESS;
+}
+
+int VectorPopFront(Vector* v)
+{
+	if (v == NULL || v->itemSize == 0 || v->length == 0) return M_FAILURE_GEN;
+
+	if (v->destructor != NULL)
+	{
+		if (v->destructor(v->data) != M_SUCCESS) return M_FAILURE_GEN;
+	}
+
+	size_t moveLength = (v->length - 1) * v->itemSize;
+	void* movePtr = (char*)v->data + v->itemSize;
+	memmove(v->data, movePtr, moveLength);
+	v->length--;
+
+	return M_SUCCESS;
+}
+
+int VectorPopBack(Vector* v)
+{
+	if (v == NULL || v->itemSize == 0 || v->length == 0) return M_FAILURE_GEN;
+
+	if (v->destructor != NULL)
+	{
+		void* dataPtr = (char*)v->data + (v->length - 1) * v->itemSize;
+		if (v->destructor(dataPtr) != M_SUCCESS) return M_FAILURE_GEN;
+	}
+	v->length--;
 
 	return M_SUCCESS;
 }

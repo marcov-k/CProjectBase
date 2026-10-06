@@ -52,7 +52,7 @@ int main()
 	}
 
 	newVal = 150;
-	VectorAppend(&v, &newVal, NULL);
+	VectorPushBack(&v, &newVal, NULL);
 	printf("\n\nAppended %d to original vector: ", newVal);
 	for (size_t i = 0; i < v.length; ++i)
 	{
@@ -60,7 +60,17 @@ int main()
 		printf("%d, ", value);
 	}
 
-	printf("\nCopied vector: ");
+	printf("\n\nCopied vector: ");
+	for (size_t i = 0; i < v2.length; ++i)
+	{
+		int value = deref(GetElementAt(&v2, i), int);
+		printf("%d, ", value);
+	}
+
+	printf("\nLast element in vector: %d", deref(GetElementLast(&v2), int));
+
+	VectorPopBack(&v2);
+	printf("\n\nRemoved last element: ");
 	for (size_t i = 0; i < v2.length; ++i)
 	{
 		int value = deref(GetElementAt(&v2, i), int);
