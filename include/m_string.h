@@ -146,6 +146,7 @@ int ConcatCStrString(String* dest, const char s1[], const String* s2);
 
 // Reverse characters of a String in place
 int ReverseString(String* s);
+
 // Split a String at an index
 // The provided StringSplit must have valid initialization - either from CreateStringSplit() or a previous SplitString() call
 int SplitString(StringSplit* split, const String* s, size_t index);

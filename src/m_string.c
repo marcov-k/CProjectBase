@@ -387,9 +387,10 @@ static int InsertStringBytes(String* s, size_t index, const char insert[], size_
 		memcpy(temp, insert, insertLen);
 	}
 
+	size_t moveLength = s->length - index;
+
 	if (GrowString(s, length) != M_SUCCESS) goto FAILURE;
 
-	size_t moveLength = s->length - index;
 	if (contained == M_CONT_FULL)
 	{
 		memmove(s->data + index + insertLen, s->data + index, moveLength);

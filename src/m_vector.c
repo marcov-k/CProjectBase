@@ -133,9 +133,11 @@ Vector CopyVector(const Vector* v, Copier copier)
 {
 	Vector copy = { NULL, NULL, 0, 0, 0 };
 
-	if (v == NULL) return copy;
+	if (v == NULL || v->itemSize == 0) return copy;
 
 	copy.itemSize = v->itemSize;
+
+	if (v->length == 0) return copy;
 
 	if (GrowVector(&copy, v->length) != M_SUCCESS) goto FAILURE;
 
@@ -212,7 +214,7 @@ FAILURE:
 
 int CopyDataToVector(Vector* dest, const void* source, size_t sourceLen, Copier copier)
 {
-	if (dest == NULL) return M_FAILURE_GEN;
+	if (dest == NULL || dest->itemSize == 0) return M_FAILURE_GEN;
 
 	if (source == NULL || sourceLen == 0)
 	{
@@ -363,6 +365,79 @@ int VectorPushBack(Vector* v, const void* item, Copier copier)
 	v->length++;
 
 	return M_SUCCESS;
+}
+
+int VectorInsertAt(Vector* v, size_t index, const void* item, Copier copier)
+{
+	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
+	if (index > v->length) return M_FAILURE_GEN;
+
+	if (v->length > SIZE_MAX - 1) return M_FAILURE_GEN;
+	if (GrowVector(v, v->length + 1) != M_SUCCESS) return M_FAILURE_GEN;
+
+	size_t moveLength = (v->length - index) * v->itemSize;
+	void* vPtr = (char*)v->data + index * v->itemSize;
+	void* movePtr = (char*)vPtr + v->itemSize;
+	memmove(movePtr, vPtr, moveLength);
+
+	if (copier == NULL)
+	{
+		memcpy(vPtr, item, v->itemSize);
+	}
+	else
+	{
+		if (copier(vPtr, item) != M_SUCCESS) return M_FAILURE_GEN;
+	}
+	v->length++;
+
+	return M_SUCCESS;
+}
+
+static int InsertCArrAt(Vector* v, size_t index, const void* insert, size_t insertLen, Copier copier)
+{
+	if (v == NULL || v->itemSize == 0) return M_FAILURE_GEN;
+	if (insert == NULL || insertLen == 0) return M_SUCCESS;
+
+	if (v->length > SIZE_MAX - insertLen) return M_FAILURE_GEN;
+	size_t length = v->length + insertLen;
+	if (GrowVector(v, length) != M_SUCCESS) return M_FAILURE_GEN;
+
+	size_t moveLength = (v->length - index) * v->itemSize;
+	void* vPtr = (char*)v->data + index * v->itemSize;
+	void* movePtr = (char*)vPtr + insertLen * v->itemSize;
+	memmove(movePtr, vPtr, moveLength);
+
+	if (copier == NULL)
+	{
+		memcpy(vPtr, insert, insertLen * v->itemSize);
+	}
+	else
+	{
+		for (size_t i = 0; i < insertLen; ++i)
+		{
+			size_t dataIndex = i * v->itemSize;
+			void* destPtr = (char*)vPtr + dataIndex;
+			void* sourcePtr = (char*)insert + dataIndex;
+			if (copier(destPtr, sourcePtr) != M_SUCCESS) return M_FAILURE_GEN;
+		}
+	}
+	v->length = length;
+
+	return M_SUCCESS;
+}
+
+int VectorInsertRangeAt(Vector* v, size_t index, const Vector* insert, Copier copier)
+{
+	if (v == NULL || v->itemSize == 0 || insert == NULL || insert->itemSize != v->itemSize) return M_FAILURE_GEN;
+
+	return InsertCArrAt(v, index, insert->data, insert->length, copier);
+}
+
+int VectorInsertArrayAt(Vector* v, size_t index, const void* insert, size_t insertLen, Copier copier)
+{
+	if (v == NULL || v->itemSize == 0 || insert == NULL) return M_FAILURE_GEN;
+
+	return InsertCArrAt(v, index, insert, insertLen, copier);
 }
 
 int VectorRemoveAt(Vector* v, size_t index)

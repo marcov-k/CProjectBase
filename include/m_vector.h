@@ -124,6 +124,12 @@ int VectorSetElementLast(Vector* v, const void* item, Copier copier);
 int VectorPushFront(Vector* v, const void* item, Copier copier);
 // Append an element to the end of a Vector
 int VectorPushBack(Vector* v, const void* item, Copier copier);
+// Insert an element at a given index in a Vector
+int VectorInsertAt(Vector* v, size_t index, const void* item, Copier copier);
+// Insert a Vector at a given index in another Vector
+int VectorInsertRangeAt(Vector* v, size_t index, const Vector* insert, Copier copier);
+// Insert a C-array at a given index in a Vector
+int VectorInsertArrayAt(Vector* v, size_t index, const void* insert, size_t insertLen, Copier copier);
 
 // Remove an element at a given index from a Vector
 int VectorRemoveAt(Vector* v, size_t index);
