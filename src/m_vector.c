@@ -64,24 +64,28 @@ FAILURE:
 	return v;
 }
 
-int DestroyVector(Vector* v)
+int DestroyVector(void* v)
 {
-	if (v == NULL || v->itemSize == 0) return M_FAILURE_GEN;
+	if (v == NULL) return M_FAILURE_GEN;
 
-	if (v->destructor != NULL)
+	Vector* vec = (Vector*)v;
+
+	if (vec->itemSize == 0) return M_FAILURE_GEN;
+
+	if (vec->destructor != NULL)
 	{
-		for (size_t i = 0; i < v->length; ++i)
+		for (size_t i = 0; i < vec->length; ++i)
 		{
-			if (v->destructor((char*)v->data + i * v->itemSize) != M_SUCCESS) return M_FAILURE_GEN;
+			if (vec->destructor((char*)vec->data + i * vec->itemSize) != M_SUCCESS) return M_FAILURE_GEN;
 		}
 	}
 
-	free(v->data);
-	v->data = NULL;
-	v->destructor = NULL;
-	v->itemSize = 0;
-	v->length = 0;
-	v->capacity = 0;
+	free(vec->data);
+	vec->data = NULL;
+	vec->destructor = NULL;
+	vec->itemSize = 0;
+	vec->length = 0;
+	vec->capacity = 0;
 
 	return M_SUCCESS;
 }
@@ -161,43 +165,48 @@ SUCCESS:
 	return copy;
 }
 
-int CopyVectorTo(Vector* dest, const Vector* source, Copier copier)
+int CopyVectorTo(void* dest, const void* source, Copier copier)
 {
 	if (dest == NULL || source == NULL) return M_FAILURE_GEN;
 
-	if (dest == source) return M_SUCCESS;
+	Vector* destVec = (Vector*)dest;
+	Vector* sourceVec = (Vector*)source;
 
-	dest->itemSize = source->itemSize;
-	dest->destructor = source->destructor;
+	if (sourceVec->itemSize == 0) return M_FAILURE_GEN;
 
-	if (source->length == 0)
+	if (destVec == sourceVec) return M_SUCCESS;
+
+	destVec->itemSize = sourceVec->itemSize;
+	destVec->destructor = sourceVec->destructor;
+
+	if (sourceVec->length == 0)
 	{
-		if (ClearVector(dest) != M_SUCCESS) goto FAILURE;
+		if (ClearVector(destVec) != M_SUCCESS) goto FAILURE;
 		return M_SUCCESS;
 	}
 
-	if (GrowVector(dest, source->length) != M_SUCCESS) goto FAILURE;
+	if (GrowVector(destVec, sourceVec->length) != M_SUCCESS) goto FAILURE;
 
 	if (copier == NULL)
 	{
-		memcpy(dest->data, source->data, source->length * source->itemSize);
+		memcpy(destVec->data, sourceVec->data, sourceVec->length * sourceVec->itemSize);
 	}
 	else
 	{
-		for (size_t i = 0; i < source->length; ++i)
+		for (size_t i = 0; i < sourceVec->length; ++i)
 		{
-			size_t dataIndex = i * source->itemSize;
-			void* destPtr = (char*)dest->data + dataIndex;
-			void* sourcePtr = (char*)source->data + dataIndex;
+			size_t dataIndex = i * sourceVec->itemSize;
+			void* destPtr = (char*)destVec->data + dataIndex;
+			void* sourcePtr = (char*)sourceVec->data + dataIndex;
 			if (copier(destPtr, sourcePtr) != M_SUCCESS) goto FAILURE;
 		}
 	}
-	dest->length = source->length;
+	destVec->length = sourceVec->length;
 
 	return M_SUCCESS;
 
 FAILURE:
-	dest->itemSize = 0;
+	destVec->itemSize = 0;
 	return M_FAILURE_GEN;
 }
 

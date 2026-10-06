@@ -83,7 +83,7 @@ typedef struct [[nodiscard("Vector owns heap memory; the result must be stored a
 // Returned Vector is owned by and must be destroyed by caller
 Vector CreateVector(const void* data, size_t length, size_t itemSize, Destructor destructor, Copier copier);
 // Free all heap memory used by a Vector and its elements
-int DestroyVector(Vector* v);
+int DestroyVector(void* v);
 // Clear the data of a Vector
 int ClearVector(Vector* v);
 // Move data from one Vector to another
@@ -96,7 +96,7 @@ int MoveVector(Vector* dest, Vector* source);
 Vector CopyVector(const Vector* v, Copier copier);
 // Copy data from one Vector to another
 // Will mutate the dest Vector to accept the type of data stored in the source Vector
-int CopyVectorTo(Vector* dest, const Vector* source, Copier copier);
+int CopyVectorTo(void* dest, const void* source, Copier copier);
 // Copy data into a Vector
 // Source data pointers pointing into the dest Vector are unsupported
 // Dest Vector must be configured for the type of data being copied.
