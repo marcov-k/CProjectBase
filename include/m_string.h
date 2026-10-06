@@ -107,25 +107,29 @@ StringSplit CreateStringSplit(void);
 int DestroyStringSplit(StringSplit* split);
 
 // Get a copy of the character at a given index in a String
-char GetCharAt(const String* s, size_t index);
+char StringGetCharAt(const String* s, size_t index);
 // Get a pointer to the character at a given index in a String
-char* GetCharPtrAt(const String* s, size_t index);
+char* StringGetCharPtrAt(const String* s, size_t index);
 // Set a character at a given index in a String
-int SetCharAt(String* s, size_t index, char chara);
+int StringSetCharAt(String* s, size_t index, char chara);
 
 // Print data of a String
 int PrintString(const String* s);
 // Print data of a String and append a line break
 int PrintStringLn(const String* s);
 
+// Prepend a character to a String
+int StringPrependChar(String* s, char chara);
 // Prepend a String to another String
-int PrependString(String* s, const String* prepend);
+int StringPrependString(String* s, const String* prepend);
 // Prepend a C-string to a String
-int PrependCStr(String* s, const char prepend[]);
+int StringPrependCStr(String* s, const char prepend[]);
+// Append a character to a String
+int StringAppendChar(String* s, char chara);
 // Append a String to another String
-int AppendString(String* s, const String* append);
+int StringAppendString(String* s, const String* append);
 // Append a C-string to a String
-int AppendCStr(String* s, const char append[]);
+int StringAppendCStr(String* s, const char append[]);
 
 // Concatenate two Strings
 int ConcatStrings(String* dest, const String* s1, const String* s2);
@@ -140,38 +144,38 @@ int ReverseString(String* s);
 // The provided StringSplit must have valid initialization - either from CreateStringSplit() or a previous SplitString() call
 int SplitString(StringSplit* split, const String* s, size_t index);
 // Trim characters from start of a String
-int TrimStringStart(String* s, size_t count);
+int StringTrimStart(String* s, size_t count);
 // Trim characters from end of a String
-int TrimStringEnd(String* s, size_t count);
+int StringTrimEnd(String* s, size_t count);
 // Trim characters from start and end of a String (start index inclusive, end index exclusive)
-int TrimString(String* s, size_t start, size_t end);
+int StringTrim(String* s, size_t start, size_t end);
 // Extract substring from a String between a start and end index (start inclusive, end exclusive)
-int ExtractSubstring(String* dest, const String* s, size_t start, size_t end);
+int StringExtractSubstring(String* dest, const String* s, size_t start, size_t end);
 
 // Check whether two Strings are exactly equal
 bool StringsEqual(const void* s1, const void* s2);
 // Check whether a String and a C-string are exactly equal
 bool StringsEqualCStr(const String* s1, const char s2[]);
 // Check whether a String contains another String
-bool ContainsSubstring(const String* s, const String* sub);
+bool StringContainsSubstring(const String* s, const String* sub);
 // Check whether a String contains a C-string
-bool ContainsCStr(const String* s, const char sub[]);
+bool StringContainsCStr(const String* s, const char sub[]);
 
 // Remove character from a String at a given index
-int RemoveCharAt(String* s, size_t index);
+int StringRemoveCharAt(String* s, size_t index);
 // Remove a range from a String
-int RemoveStringRange(String* s, size_t start, size_t length);
+int StringRemoveStringRange(String* s, size_t start, size_t length);
 // Remove the first instance of a character from a String
-int RemoveCharFirst(String* s, char chara);
+int StringRemoveCharFirst(String* s, char chara);
 // Remove all instances of a character from a String
-int RemoveCharAll(String* s, char chara);
+int StringRemoveCharAll(String* s, char chara);
 // Remove the first instance of a substring from a String
-int RemoveSubstringFirst(String* s, const String* substring);
+int StringRemoveSubstringFirst(String* s, const String* substring);
 // Remove all instances of a substring from a String.
-int RemoveSubstringAll(String* s, const String* substring);
+int StringRemoveSubstringAll(String* s, const String* substring);
 // Remove the first instance of a C-string from a String
-int RemoveCStrFirst(String* s, const char substring[]);
+int StringRemoveCStrFirst(String* s, const char substring[]);
 // Remove all instances of a C-string from a String
-int RemoveCStrAll(String* s, const char substring[]);
+int StringRemoveCStrAll(String* s, const char substring[]);
 
 #endif

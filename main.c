@@ -13,7 +13,7 @@ int main()
 	printf("Copied string: ");
 	PrintStringLn(&s2);
 
-	RemoveCharAll(&s2, 'l');
+	StringRemoveCharAll(&s2, 'l');
 	printf("\nRemoved every \'l\': ");
 	PrintStringLn(&s2);
 
@@ -29,7 +29,7 @@ int main()
 	printf("\nNumber vector created: ");
 	for (size_t i = 0; i < v.length; ++i)
 	{
-		int value = deref(GetElementAt(&v, i), int);
+		int value = deref(VectorGetElementAt(&v, i), int);
 		printf("%d, ", value);
 	}
 
@@ -37,17 +37,17 @@ int main()
 	printf("\nCopied vector: ");
 	for (size_t i = 0; i < v2.length; ++i)
 	{
-		int value = deref(GetElementAt(&v2, i), int);
+		int value = deref(VectorGetElementAt(&v2, i), int);
 		printf("%d, ", value);
 	}
 
 	int newVal = 10;
 	size_t changeIndex = 1;
-	SetElementAt(&v2, changeIndex, &newVal, NULL);
+	VectorSetElementAt(&v2, changeIndex, &newVal, NULL);
 	printf("\n\nChanged element at index %zu to %d: ", changeIndex, newVal);
 	for (size_t i = 0; i < v2.length; ++i)
 	{
-		int value = deref(GetElementAt(&v2, i), int);
+		int value = deref(VectorGetElementAt(&v2, i), int);
 		printf("%d, ", value);
 	}
 
@@ -56,24 +56,24 @@ int main()
 	printf("\n\nAppended %d to original vector: ", newVal);
 	for (size_t i = 0; i < v.length; ++i)
 	{
-		int value = deref(GetElementAt(&v, i), int);
+		int value = deref(VectorGetElementAt(&v, i), int);
 		printf("%d, ", value);
 	}
 
 	printf("\n\nCopied vector: ");
 	for (size_t i = 0; i < v2.length; ++i)
 	{
-		int value = deref(GetElementAt(&v2, i), int);
+		int value = deref(VectorGetElementAt(&v2, i), int);
 		printf("%d, ", value);
 	}
 
-	printf("\nLast element in vector: %d", deref(GetElementLast(&v2), int));
+	printf("\nLast element in vector: %d", deref(VectorGetElementLast(&v2), int));
 
 	VectorPopBack(&v2);
 	printf("\n\nRemoved last element: ");
 	for (size_t i = 0; i < v2.length; ++i)
 	{
-		int value = deref(GetElementAt(&v2, i), int);
+		int value = deref(VectorGetElementAt(&v2, i), int);
 		printf("%d, ", value);
 	}
 

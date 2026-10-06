@@ -172,7 +172,7 @@ int DestroyStringSplit(StringSplit* split)
 	return M_SUCCESS;
 }
 
-char GetCharAt(const String* s, size_t index)
+char StringGetCharAt(const String* s, size_t index)
 {
 	if (s == NULL) return '\0';
 	if (index >= s->length) return '\0';
@@ -180,7 +180,7 @@ char GetCharAt(const String* s, size_t index)
 	return s->data[index];
 }
 
-char* GetCharPtrAt(const String* s, size_t index)
+char* StringGetCharPtrAt(const String* s, size_t index)
 {
 	if (s == NULL) return NULL;
 	if (index >= s->length) return NULL;
@@ -188,7 +188,7 @@ char* GetCharPtrAt(const String* s, size_t index)
 	return s->data + index;
 }
 
-int SetCharAt(String* s, size_t index, char chara)
+int StringSetCharAt(String* s, size_t index, char chara)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (index >= s->length) return M_FAILURE_GEN;
@@ -230,6 +230,22 @@ static int PointsInto(const char s[], size_t sLen, const char p[], size_t pLen, 
 	return M_CONT_FULL;
 }
 
+int StringPrependChar(String* s, char chara)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+
+	if (s->length > SIZE_MAX - 1) return M_FAILURE_GEN;
+	size_t length = s->length + 1;
+	if (GrowString(s, length) != M_SUCCESS) return M_FAILURE_GEN;
+
+	memmove(s->data, s->data + 1, s->length);
+	s->data[0] = chara;
+	s->data[length] = '\0';
+	s->length++;
+
+	return M_SUCCESS;
+}
+
 static int PrependStringBytes(String* s, const char prepend[], size_t prependLen)
 {
 	if (s == NULL) return M_FAILURE_GEN;
@@ -260,18 +276,33 @@ static int PrependStringBytes(String* s, const char prepend[], size_t prependLen
 	return M_SUCCESS;
 }
 
-int PrependString(String* s, const String* prepend)
+int StringPrependString(String* s, const String* prepend)
 {
 	if (prepend == NULL) return M_FAILURE_GEN;
 	
 	return PrependStringBytes(s, prepend->data, prepend->length);
 }
 
-int PrependCStr(String* s, const char prepend[])
+int StringPrependCStr(String* s, const char prepend[])
 {
 	if (prepend == NULL) return M_FAILURE_GEN;
 
 	return PrependStringBytes(s, prepend, strlen(prepend));
+}
+
+int StringAppendChar(String* s, char chara)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+
+	if (s->length > SIZE_MAX - 1) return M_FAILURE_GEN;
+	size_t length = s->length + 1;
+	if (GrowString(s, length) != M_SUCCESS) return M_FAILURE_GEN;
+
+	s->data[s->length] = chara;
+	s->data[length] = '\0';
+	s->length++;
+
+	return M_SUCCESS;
 }
 
 static int AppendStringBytes(String* s, const char append[], size_t appendLen)
@@ -302,14 +333,14 @@ static int AppendStringBytes(String* s, const char append[], size_t appendLen)
 	return M_SUCCESS;
 }
 
-int AppendString(String* s, const String* append)
+int StringAppendString(String* s, const String* append)
 {
 	if (append == NULL) return M_FAILURE_GEN;
 
 	return AppendStringBytes(s, append->data, append->length);
 }
 
-int AppendCStr(String* s, const char append[])
+int StringAppendCStr(String* s, const char append[])
 {
 	if (append == NULL) return M_FAILURE_GEN;
 
@@ -479,7 +510,7 @@ int SplitString(StringSplit* split, const String* s, size_t index)
 	return M_SUCCESS;
 }
 
-int TrimStringStart(String* s, size_t count)
+int StringTrimStart(String* s, size_t count)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (s->data == NULL || count == 0) return M_SUCCESS;
@@ -497,7 +528,7 @@ int TrimStringStart(String* s, size_t count)
 	return M_SUCCESS;
 }
 
-int TrimStringEnd(String* s, size_t count)
+int StringTrimEnd(String* s, size_t count)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (s->data == NULL || count == 0) return M_SUCCESS;
@@ -514,7 +545,7 @@ int TrimStringEnd(String* s, size_t count)
 	return M_SUCCESS;
 }
 
-int TrimString(String* s, size_t start, size_t end)
+int StringTrim(String* s, size_t start, size_t end)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (start > end) return M_FAILURE_GEN;
@@ -537,7 +568,7 @@ int TrimString(String* s, size_t start, size_t end)
 	return M_SUCCESS;
 }
 
-int ExtractSubstring(String* dest, const String* s, size_t start, size_t end)
+int StringExtractSubstring(String* dest, const String* s, size_t start, size_t end)
 {
 	if (dest == NULL || s == NULL) return M_FAILURE_GEN;
 
@@ -612,7 +643,7 @@ static bool StringContainsBytes(const String* s, const char sub[], size_t subLen
 	return false;
 }
 
-bool ContainsSubstring(const String* s, const String* sub)
+bool StringContainsSubstring(const String* s, const String* sub)
 {
 	if (s == NULL || sub == NULL) return false;
 
@@ -624,7 +655,7 @@ bool ContainsSubstring(const String* s, const String* sub)
 	return StringContainsBytes(s, sub->data, sub->length);
 }
 
-bool ContainsCStr(const String* s, const char sub[])
+bool StringContainsCStr(const String* s, const char sub[])
 {
 	if (s == NULL || sub == NULL) return false;
 
@@ -637,7 +668,7 @@ bool ContainsCStr(const String* s, const char sub[])
 	return StringContainsBytes(s, sub, subLen);
 }
 
-int RemoveCharAt(String* s, size_t index)
+int StringRemoveCharAt(String* s, size_t index)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (index >= s->length) return M_FAILURE_GEN;
@@ -650,7 +681,7 @@ int RemoveCharAt(String* s, size_t index)
 	return M_SUCCESS;
 }
 
-int RemoveStringRange(String* s, size_t start, size_t length)
+int StringRemoveStringRange(String* s, size_t start, size_t length)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (start > SIZE_MAX - length) return M_FAILURE_GEN;
@@ -665,7 +696,7 @@ int RemoveStringRange(String* s, size_t start, size_t length)
 	return M_SUCCESS;
 }
 
-int RemoveCharFirst(String* s, char chara)
+int StringRemoveCharFirst(String* s, char chara)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (s->length == 0) return M_SUCCESS;
@@ -685,7 +716,7 @@ int RemoveCharFirst(String* s, char chara)
 	return M_SUCCESS;
 }
 
-int RemoveCharAll(String* s, char chara)
+int StringRemoveCharAll(String* s, char chara)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (s->length == 0) return M_SUCCESS;
@@ -765,7 +796,7 @@ static int RemoveCStrFromStringAll(String* s, const char sub[], size_t subLen)
 	return M_SUCCESS;
 }
 
-int RemoveSubstringFirst(String* s, const String* substring)
+int StringRemoveSubstringFirst(String* s, const String* substring)
 {
 	if (s == NULL || substring == NULL) return M_FAILURE_GEN;
 	if (s->length == 0 || substring->length == 0) return M_SUCCESS;
@@ -780,7 +811,7 @@ int RemoveSubstringFirst(String* s, const String* substring)
 	return RemoveCStrFromStringFirst(s, substring->data, substring->length);
 }
 
-int RemoveSubstringAll(String* s, const String* substring)
+int StringRemoveSubstringAll(String* s, const String* substring)
 {
 	if (s == NULL || substring == NULL) return M_FAILURE_GEN;
 	if (s->length == 0 || substring->length == 0) return M_SUCCESS;
@@ -795,7 +826,7 @@ int RemoveSubstringAll(String* s, const String* substring)
 	return RemoveCStrFromStringAll(s, substring->data, substring->length);
 }
 
-int RemoveCStrFirst(String* s, const char substring[])
+int StringRemoveCStrFirst(String* s, const char substring[])
 {
 	if (s == NULL || substring == NULL) return M_FAILURE_GEN;
 	
@@ -806,7 +837,7 @@ int RemoveCStrFirst(String* s, const char substring[])
 	return RemoveCStrFromStringFirst(s, substring, substringLen);
 }
 
-int RemoveCStrAll(String* s, const char substring[])
+int StringRemoveCStrAll(String* s, const char substring[])
 {
 	if (s == NULL || substring == NULL) return M_FAILURE_GEN;
 

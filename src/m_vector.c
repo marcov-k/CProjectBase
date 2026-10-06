@@ -245,7 +245,7 @@ FAILURE:
 	return M_FAILURE_GEN;
 }
 
-void* GetElementAt(const Vector* v, size_t index)
+void* VectorGetElementAt(const Vector* v, size_t index)
 {
 	if (v == NULL || v->itemSize == 0 || v->length == 0) return NULL;
 	if (index >= v->length) return NULL;
@@ -253,21 +253,21 @@ void* GetElementAt(const Vector* v, size_t index)
 	return (char*)v->data + index * v->itemSize;
 }
 
-void* GetElementFirst(const Vector* v)
+void* VectorGetElementFirst(const Vector* v)
 {
 	if (v == NULL || v->itemSize == 0 || v->length == 0) return NULL;
 
 	return v->data;
 }
 
-void* GetElementLast(const Vector* v)
+void* VectorGetElementLast(const Vector* v)
 {
 	if (v == NULL || v->itemSize == 0 || v->length == 0) return NULL;
 
 	return (char*)v->data + (v->length - 1) * v->itemSize;
 }
 
-int SetElementAt(Vector* v, size_t index, const void* item, Copier copier)
+int VectorSetElementAt(Vector* v, size_t index, const void* item, Copier copier)
 {
 	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
 	if (v->length == 0) return M_FAILURE_GEN;
@@ -286,7 +286,7 @@ int SetElementAt(Vector* v, size_t index, const void* item, Copier copier)
 	return M_SUCCESS;
 }
 
-int SetElementFirst(Vector* v, const void* item, Copier copier)
+int VectorSetElementFirst(Vector* v, const void* item, Copier copier)
 {
 	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
 	if (v->length == 0) return M_FAILURE_GEN;
@@ -303,7 +303,7 @@ int SetElementFirst(Vector* v, const void* item, Copier copier)
 	return M_SUCCESS;
 }
 
-int SetElementLast(Vector* v, const void* item, Copier copier)
+int VectorSetElementLast(Vector* v, const void* item, Copier copier)
 {
 	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
 	if (v->length == 0) return M_FAILURE_GEN;
