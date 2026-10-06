@@ -270,3 +270,24 @@ int SetElementAt(Vector* v, size_t index, const void* item, Copier copier)
 
 	return M_SUCCESS;
 }
+
+int VectorAppend(Vector* v, const void* item, Copier copier)
+{
+	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
+
+	if (v->length > SIZE_MAX - 1) return M_FAILURE_GEN;
+	if (GrowVector(v, v->length + 1) != M_SUCCESS) return M_FAILURE_GEN;
+
+	void* vPtr = (char*)v->data + v->length * v->itemSize;
+	if (copier == NULL)
+	{
+		memcpy(vPtr, item, v->itemSize);
+	}
+	else
+	{
+		if (copier(vPtr, item) != M_SUCCESS) return M_FAILURE_GEN;
+	}
+	v->length++;
+
+	return M_SUCCESS;
+}

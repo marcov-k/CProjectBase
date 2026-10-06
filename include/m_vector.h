@@ -62,6 +62,11 @@ typedef struct [[nodiscard("Vector owns heap memory; the result must be stored a
 	NULL pointer arguments to comparison functions will always cause the function to return false.
 
 
+	Aliasing:
+	The data buffers of Vectors can never overlap.
+	A Vector cannot contain multiple instances of the same element or struct.
+
+
 	Destructors:
 	Functions removing elements from Vectors, eg. DestroyVector() and ClearVector(), will use the Vector's destructor pointer
 	if it is non-NULL.
@@ -107,5 +112,9 @@ void* GetElementAt(const Vector* v, size_t index);
 // Set an element at a given index in a Vector
 // Element cannot point into the data buffer of the Vector
 int SetElementAt(Vector* v, size_t index, const void* item, Copier copier);
+
+// Append an element to the end of a Vector
+// Element cannot point into the data buffer of the Vector
+int VectorAppend(Vector* v, const void* item, Copier copier);
 
 #endif

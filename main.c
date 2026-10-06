@@ -18,7 +18,7 @@ int main()
 	PrintStringLn(&s2);
 
 	ReverseString(&s);
-	printf("\nReversed string: ");
+	printf("\nReversed original string: ");
 	PrintStringLn(&s);
 
 	DestroyString(&s);
@@ -35,7 +35,7 @@ int main()
 
 	Vector v2 = CopyVector(&v, NULL);
 	printf("\nCopied vector: ");
-	for (size_t i = 0; i < v.length; ++i)
+	for (size_t i = 0; i < v2.length; ++i)
 	{
 		int value = deref(GetElementAt(&v2, i), int);
 		printf("%d, ", value);
@@ -45,7 +45,23 @@ int main()
 	size_t changeIndex = 1;
 	SetElementAt(&v2, changeIndex, &newVal, NULL);
 	printf("\n\nChanged element at index %zu to %d: ", changeIndex, newVal);
+	for (size_t i = 0; i < v2.length; ++i)
+	{
+		int value = deref(GetElementAt(&v2, i), int);
+		printf("%d, ", value);
+	}
+
+	newVal = 150;
+	VectorAppend(&v, &newVal, NULL);
+	printf("\n\nAppended %d to original vector: ", newVal);
 	for (size_t i = 0; i < v.length; ++i)
+	{
+		int value = deref(GetElementAt(&v, i), int);
+		printf("%d, ", value);
+	}
+
+	printf("\nCopied vector: ");
+	for (size_t i = 0; i < v2.length; ++i)
 	{
 		int value = deref(GetElementAt(&v2, i), int);
 		printf("%d, ", value);
