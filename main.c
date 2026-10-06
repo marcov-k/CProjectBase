@@ -25,7 +25,7 @@ int main()
 	DestroyString(&s2);
 
 	int nums[] = { 1, 2, 3, 4, 5 };
-	Vector v = CreateVector(nums, 5, sizeof(int), NULL);
+	Vector v = CreateVector(nums, 5, sizeof(int), NULL, NULL);
 	printf("\nNumber vector created: ");
 	for (size_t i = 0; i < v.length; ++i)
 	{
@@ -33,7 +33,27 @@ int main()
 		printf("%d, ", value);
 	}
 
-	DestroyVector(&v);
+	Vector v2 = CopyVector(&v, NULL);
+	printf("\nCopied vector: ");
+	for (size_t i = 0; i < v.length; ++i)
+	{
+		int value = deref(GetElementAt(&v2, i), int);
+		printf("%d, ", value);
+	}
 
+	int newVal = 10;
+	size_t changeIndex = 1;
+	SetElementAt(&v2, changeIndex, &newVal, NULL);
+	printf("\n\nChanged element at index %zu to %d: ", changeIndex, newVal);
+	for (size_t i = 0; i < v.length; ++i)
+	{
+		int value = deref(GetElementAt(&v2, i), int);
+		printf("%d, ", value);
+	}
+
+	DestroyVector(&v);
+	DestroyVector(&v2);
+
+	printf("\n");
 	return 0;
 }

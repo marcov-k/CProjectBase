@@ -65,7 +65,7 @@ typedef struct [[nodiscard("StringSplit owns heap memory; the result must be sto
 		- Append self
 		- Concat with destination equal to an operand
 		- Extract substring into the same String
-		- Split String aliasing a member String of the given StringSplit
+		- SplitString aliasing a member String of the given StringSplit
 
 	Other aliasing cases should be assumed unsupported.
 

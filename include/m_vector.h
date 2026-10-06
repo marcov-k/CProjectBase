@@ -51,9 +51,13 @@ typedef struct [[nodiscard("Vector owns heap memory; the result must be stored a
 	Functions mutating parameters will leave all output parameters unmodified in the case of any argument being a NULL Vector pointer,
 	otherwise the output parameter will be invalidated (item size = 0) in case of failure.
 
+	All functions returning a void* pointer will return a NULL pointer in case of failure.
+	Data writing functions will return M_FAILURE_GEN (1) in case of failure and may leave the Vector in a partially modified state.
+
 
 	NULL and Empty Arguments:
-	NULL void* pointer arguments will return a valid empty Vector.
+	NULL void* pointer arguments to creation and copy functions will return a valid empty Vector.
+	NULL void* pointer arguments to data writing functions will result in a failure.
 	Any NULL Vector argument to a function mutating output parameters will result in a failure.
 	NULL pointer arguments to comparison functions will always cause the function to return false.
 
@@ -70,13 +74,14 @@ typedef struct [[nodiscard("Vector owns heap memory; the result must be stored a
 
 
 	Bounds Checking:
-	Data access functions will return a NULL pointer in case of an out-of-range index or other failure.
+	Data access functions will return a NULL pointer in case of an out-of-range index.
+	Data writing functions will return M_FAILURE_GEN (1) in case of an out-of-range index.
 */
 
 // Create a new Vector struct
 // Null pointer argument will return an empty Vector with capacity = length
 // Returned Vector is owned by and must be destroyed by caller
-Vector CreateVector(void* data, size_t length, size_t itemSize, Destructor destructor);
+Vector CreateVector(const void* data, size_t length, size_t itemSize, Destructor destructor, Copier copier);
 // Free all heap memory used by a Vector and its elements
 int DestroyVector(Vector* v);
 // Clear the data of a Vector
@@ -99,5 +104,8 @@ int CopyDataToVector(Vector* dest, const void* source, size_t sourceLen, Copier 
 
 // Get a pointer to the element at a given index in a Vector
 void* GetElementAt(const Vector* v, size_t index);
+// Set an element at a given index in a Vector
+// Element cannot point into the data buffer of the Vector
+int SetElementAt(Vector* v, size_t index, const void* item, Copier copier);
 
 #endif

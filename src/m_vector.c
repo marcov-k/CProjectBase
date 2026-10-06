@@ -30,24 +30,37 @@ static int GrowVector(Vector* v, size_t length)
 	return M_SUCCESS;
 }
 
-Vector CreateVector(void* data, size_t length, size_t itemSize, Destructor destructor)
+Vector CreateVector(const void* data, size_t length, size_t itemSize, Destructor destructor, Copier copier)
 {
 	Vector v = { NULL, destructor, itemSize, 0, 0 };
 
 	if (length == 0 || itemSize == 0) return v;
 
-	if (GrowVector(&v, length) != M_SUCCESS)
-	{
-		v.itemSize = 0;
-		return v;
-	}
+	if (GrowVector(&v, length) != M_SUCCESS) goto FAILURE;
 
 	if (data != NULL)
 	{
-		memcpy(v.data, data, length * itemSize);
-		v.length = length;
+		if (copier == NULL)
+		{
+			memcpy(v.data, data, length * itemSize);
+			v.length = length;
+		}
+		else
+		{
+			for (size_t i = 0; i < length; ++i)
+			{
+				size_t dataIndex = i * itemSize;
+				void* vPtr = (char*)v.data + dataIndex;
+				void* dataPtr = (char*)data + dataIndex;
+				if (copier(vPtr, dataPtr) != M_SUCCESS) goto FAILURE;
+			}
+		}
 	}
 
+	return v;
+
+FAILURE:
+	v.itemSize = 0;
 	return v;
 }
 
@@ -125,7 +138,6 @@ Vector CopyVector(const Vector* v, Copier copier)
 	if (copier == NULL)
 	{
 		memcpy(copy.data, v->data, v->length * v->itemSize);
-		copy.length = v->length;
 	}
 	else
 	{
@@ -137,9 +149,8 @@ Vector CopyVector(const Vector* v, Copier copier)
 			if (copier(copyPtr, sourcePtr) != M_SUCCESS) goto FAILURE;
 		}
 	}
-
 	copy.destructor = v->destructor;
-	copy.itemSize = v->itemSize;
+	copy.length = v->length;
 
 	goto SUCCESS;
 
@@ -170,7 +181,6 @@ int CopyVectorTo(Vector* dest, const Vector* source, Copier copier)
 	if (copier == NULL)
 	{
 		memcpy(dest->data, source->data, source->length * source->itemSize);
-		dest->length = source->length;
 	}
 	else
 	{
@@ -182,6 +192,7 @@ int CopyVectorTo(Vector* dest, const Vector* source, Copier copier)
 			if (copier(destPtr, sourcePtr) != M_SUCCESS) goto FAILURE;
 		}
 	}
+	dest->length = source->length;
 
 	return M_SUCCESS;
 
@@ -205,7 +216,6 @@ int CopyDataToVector(Vector* dest, const void* source, size_t sourceLen, Copier 
 	if (copier == NULL)
 	{
 		memcpy(dest->data, source, sourceLen * dest->itemSize);
-		dest->length = sourceLen;
 	}
 	else
 	{
@@ -217,6 +227,7 @@ int CopyDataToVector(Vector* dest, const void* source, size_t sourceLen, Copier 
 			if (copier(destPtr, sourcePtr) != M_SUCCESS) goto FAILURE;
 		}
 	}
+	dest->length = sourceLen;
 
 	return M_SUCCESS;
 
@@ -231,4 +242,22 @@ void* GetElementAt(const Vector* v, size_t index)
 	if (index >= v->length) return NULL;
 
 	return (char*)v->data + index * v->itemSize;
+}
+
+int SetElementAt(Vector* v, size_t index, const void* item, Copier copier)
+{
+	if (v == NULL || v->itemSize == 0 || item == NULL) return M_FAILURE_GEN;
+	if (index >= v->length) return M_FAILURE_GEN;
+
+	void* vPtr = (char*)v->data + index * v->itemSize;
+	if (copier == NULL)
+	{
+		memcpy(vPtr, item, v->itemSize);
+	}
+	else
+	{
+		if (copier(vPtr, item) != M_SUCCESS) return M_FAILURE_GEN;
+	}
+
+	return M_SUCCESS;
 }
