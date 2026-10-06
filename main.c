@@ -21,6 +21,18 @@ int main()
 	printf("\nReversed original string: ");
 	PrintStringLn(&s);
 
+	size_t insertIndex = 4;
+	StringInsertCharAt(&s2, insertIndex, ' ');
+	StringInsertStringAt(&s2, insertIndex, &s);
+	printf("\nInserted a space and the original string into copied string at index %zu: ", insertIndex);
+	PrintStringLn(&s2);
+
+	insertIndex = 7;
+	StringInsertCharAt(&s, insertIndex, ' ');
+	StringInsertStringAt(&s, insertIndex, &s);
+	printf("\nInserted a space and the original string into itself at index %zu: ", insertIndex);
+	PrintStringLn(&s);
+
 	DestroyString(&s);
 	DestroyString(&s2);
 

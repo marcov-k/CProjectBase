@@ -130,6 +130,12 @@ int StringAppendChar(String* s, char chara);
 int StringAppendString(String* s, const String* append);
 // Append a C-string to a String
 int StringAppendCStr(String* s, const char append[]);
+// Insert a character at a given index in a String
+int StringInsertCharAt(String* s, size_t index, char chara);
+// Insert a String at a given index in another String
+int StringInsertStringAt(String* s, size_t index, const String* insert);
+// Insert a C-string at a given index in a String
+int StringInsertCStrAt(String* s, size_t index, const char insert[]);
 
 // Concatenate two Strings
 int ConcatStrings(String* dest, const String* s1, const String* s2);
@@ -164,7 +170,7 @@ bool StringContainsCStr(const String* s, const char sub[]);
 // Remove character from a String at a given index
 int StringRemoveCharAt(String* s, size_t index);
 // Remove a range from a String
-int StringRemoveStringRange(String* s, size_t start, size_t length);
+int StringRemoveRange(String* s, size_t start, size_t length);
 // Remove the first instance of a character from a String
 int StringRemoveCharFirst(String* s, char chara);
 // Remove all instances of a character from a String

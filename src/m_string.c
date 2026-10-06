@@ -347,6 +347,93 @@ int StringAppendCStr(String* s, const char append[])
 	return AppendStringBytes(s, append, strlen(append));
 }
 
+int StringInsertCharAt(String* s, size_t index, char chara)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (index > s->length) return M_FAILURE_GEN;
+
+	if (s->length > SIZE_MAX - 1) return M_FAILURE_GEN;
+	size_t length = s->length + 1;
+	if (GrowString(s, length) != M_SUCCESS) return M_FAILURE_GEN;
+
+	size_t moveLength = length - index;
+	memmove(s->data + index + 1, s->data + index, moveLength);
+	s->data[index] = chara;
+	s->data[length] = '\0';
+	s->length++;
+
+	return M_SUCCESS;
+}
+
+static int InsertStringBytes(String* s, size_t index, const char insert[], size_t insertLen)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+	if (index > s->length) return M_FAILURE_GEN;
+	if (insert == NULL || insertLen == 0) return M_SUCCESS;
+
+	size_t insertOff = 0;
+	int contained = PointsInto(s->data, s->length, insert, insertLen, &insertOff);
+	if (contained == M_CONT_PART) return M_FAILURE_GEN;
+
+	if (s->length > SIZE_MAX - insertLen) return M_FAILURE_GEN;
+	size_t length = s->length + insertLen;
+
+	bool needTemp = contained == M_CONT_FULL && index > insertOff && index < insertOff + insertLen;
+	char* temp = NULL;
+	if (needTemp)
+	{
+		temp = malloc(insertLen);
+		if (temp == NULL) return M_FAILURE_GEN;
+		memcpy(temp, insert, insertLen);
+	}
+
+	if (GrowString(s, length) != M_SUCCESS) goto FAILURE;
+
+	size_t moveLength = s->length - index;
+	if (contained == M_CONT_FULL)
+	{
+		memmove(s->data + index + insertLen, s->data + index, moveLength);
+		if (needTemp)
+		{
+			memcpy(s->data + index, temp, insertLen);
+			free(temp);
+			temp = NULL;
+		}
+		else
+		{
+			if (index <= insertOff) insertOff += insertLen;
+			memmove(s->data + index, s->data + insertOff, insertLen);
+		}
+	}
+	else
+	{
+		memmove(s->data + index + insertLen, s->data + index, moveLength);
+		memcpy(s->data + index, insert, insertLen);
+	}
+	s->data[length] = '\0';
+	s->length = length;
+
+	return M_SUCCESS;
+
+FAILURE:
+	if (temp != NULL) free(temp);
+	return M_FAILURE_GEN;
+}
+
+int StringInsertStringAt(String* s, size_t index, const String* insert)
+{
+	if (s == NULL || insert == NULL) return M_FAILURE_GEN;
+	
+	return InsertStringBytes(s, index, insert->data, insert->length);
+}
+
+int StringInsertCStrAt(String* s, size_t index, const char insert[])
+{
+	if (s == NULL || insert == NULL) return M_FAILURE_GEN;
+
+	return InsertStringBytes(s, index, insert, strlen(insert));
+}
+
 static int ConcatCStrings(String* dest, const char s1[], size_t s1Len, const char s2[], size_t s2Len) // Length parameters must be 0 for NULL pointers
 {
 	if (dest == NULL) return M_FAILURE_GEN;
@@ -681,7 +768,7 @@ int StringRemoveCharAt(String* s, size_t index)
 	return M_SUCCESS;
 }
 
-int StringRemoveStringRange(String* s, size_t start, size_t length)
+int StringRemoveRange(String* s, size_t start, size_t length)
 {
 	if (s == NULL) return M_FAILURE_GEN;
 	if (start > SIZE_MAX - length) return M_FAILURE_GEN;
