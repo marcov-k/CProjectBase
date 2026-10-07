@@ -13,6 +13,8 @@ int main()
 	printf("Copied string: ");
 	PrintStringLn(&s2);
 
+	printf("\nOriginal and copied strings equal: %s", StringsEqual(&s, &s2) == true ? "true" : "false");
+
 	StringRemoveCharAll(&s2, 'l');
 	printf("\nRemoved every \'l\': ");
 	PrintStringLn(&s2);
@@ -33,6 +35,8 @@ int main()
 	printf("\nInserted a space and the original string into itself at index %zu: ", insertIndex);
 	PrintStringLn(&s);
 
+	printf("\nOriginal and copied strings equal after modifications: %s\n\n", StringsEqual(&s, &s2) == true ? "true" : "false");
+
 	DestroyString(&s);
 	DestroyString(&s2);
 
@@ -52,6 +56,8 @@ int main()
 		int value = deref(VectorGetElementAt(&v2, i), int);
 		printf("%d, ", value);
 	}
+
+	printf("\nOriginal and copied vectors equal: %s", VectorsEqual(&v, &v2, NULL) == true ? "true" : "false");
 
 	int newVal = 10;
 	size_t changeIndex = 1;
@@ -88,6 +94,8 @@ int main()
 		int value = deref(VectorGetElementAt(&v2, i), int);
 		printf("%d, ", value);
 	}
+
+	printf("\n\nOriginal and copied vectors equal after modifications: %s", VectorsEqual(&v, &v2, NULL) == true ? "true" : "false");
 
 	DestroyVector(&v);
 	DestroyVector(&v2);

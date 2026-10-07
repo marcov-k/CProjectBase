@@ -697,7 +697,7 @@ bool StringsEqual(const void* s1, const void* s2)
 	String* s1Str = (String*)s1;
 	String* s2Str = (String*)s2;
 
-	if ((s1Str->data == NULL || s1Str->length == 0) && (s2Str->data == NULL || s2Str->length == 0)) return true;
+	if (s1Str->length == 0 && s2Str->length == 0) return true;
 
 	if (s1Str->length != s2Str->length) return false;
 

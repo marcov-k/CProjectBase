@@ -78,6 +78,12 @@ typedef struct [[nodiscard("Vector owns heap memory; the result must be stored a
 	or a shallow copy if the copier pointer is NULL.
 
 
+	Comparers:
+	Functions receiving Comparer function pointers, eg. VectorsEqual(), will use the given comparer to determine whether their elements are
+	equal if receiving a comparer pointer or compare the raw bytes of their elements without accounting for any nested heap memory if the
+	comparer pointer is NULL.
+
+
 	Bounds Checking:
 	Data access functions will return a NULL pointer in case of an out-of-range index.
 	Data writing functions will return M_FAILURE_GEN (1) in case of an out-of-range index.
@@ -131,11 +137,16 @@ int VectorInsertRangeAt(Vector* v, size_t index, const Vector* insert, Copier co
 // Insert a C-array at a given index in a Vector
 int VectorInsertArrayAt(Vector* v, size_t index, const void* insert, size_t insertLen, Copier copier);
 
-// Remove an element at a given index from a Vector
-int VectorRemoveAt(Vector* v, size_t index);
+// Check whether two Vectors are equal
+bool VectorsEqual(const void* v1, const void* v2, Comparer comparer);
+
 // Remove the first element in a Vector
 int VectorPopFront(Vector* v);
 // Remove the last element in a Vector
 int VectorPopBack(Vector* v);
+// Remove an element at a given index from a Vector
+int VectorRemoveAt(Vector* v, size_t index);
+// Remove a range from a Vector
+int VectorRemoveRange(Vector* v, size_t start, size_t length);
 
 #endif

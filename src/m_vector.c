@@ -440,20 +440,35 @@ int VectorInsertArrayAt(Vector* v, size_t index, const void* insert, size_t inse
 	return InsertCArrAt(v, index, insert, insertLen, copier);
 }
 
-int VectorRemoveAt(Vector* v, size_t index)
+bool VectorsEqual(const void* v1, const void* v2, Comparer comparer)
 {
-	if (v == NULL || v->itemSize == 0 || v->length == 0) return M_FAILURE_GEN;
-	if (index >= v->length) return M_FAILURE_GEN;
+	if (v1 == NULL || v2 == NULL) return false;
 
-	void* dataPtr = (char*)v->data + index * v->itemSize;
-	if (v->destructor != NULL && v->destructor(dataPtr) != M_SUCCESS) return M_FAILURE_GEN;
+	Vector* v1Vec = (Vector*)v1;
+	Vector* v2Vec = (Vector*)v2;
 
-	size_t moveLength = (v->length - index - 1) * v->itemSize;
-	void* movePtr = (char*)dataPtr + v->itemSize;
-	memmove(dataPtr, movePtr, moveLength);
-	v->length--;
+	if (v1Vec->itemSize == 0 || v2Vec->itemSize == 0) return false;
+	if (v1Vec->itemSize != v2Vec->itemSize) return false;
 
-	return M_SUCCESS;
+	if (v1Vec->length == 0 && v2Vec->length == 0) return true;
+	if (v1Vec->length != v2Vec->length) return false;
+
+	if (comparer == NULL)
+	{
+		if (memcmp(v1Vec->data, v2Vec->data, v1Vec->length * v1Vec->itemSize) != 0) return false;
+	}
+	else
+	{
+		for (size_t i = 0; i < v1Vec->length; ++i)
+		{
+			size_t dataIndex = i * v1Vec->itemSize;
+			void* v1Ptr = (char*)v1Vec->data + dataIndex;
+			void* v2Ptr = (char*)v2Vec->data + dataIndex;
+			if (comparer(v1Ptr, v2Ptr) == false) return false;
+		}
+	}
+
+	return true;
 }
 
 int VectorPopFront(Vector* v)
@@ -483,6 +498,49 @@ int VectorPopBack(Vector* v)
 		if (v->destructor(dataPtr) != M_SUCCESS) return M_FAILURE_GEN;
 	}
 	v->length--;
+
+	return M_SUCCESS;
+}
+
+int VectorRemoveAt(Vector* v, size_t index)
+{
+	if (v == NULL || v->itemSize == 0 || v->length == 0) return M_FAILURE_GEN;
+	if (index >= v->length) return M_FAILURE_GEN;
+
+	void* dataPtr = (char*)v->data + index * v->itemSize;
+	if (v->destructor != NULL && v->destructor(dataPtr) != M_SUCCESS) return M_FAILURE_GEN;
+
+	size_t moveLength = (v->length - index - 1) * v->itemSize;
+	void* movePtr = (char*)dataPtr + v->itemSize;
+	memmove(dataPtr, movePtr, moveLength);
+	v->length--;
+
+	return M_SUCCESS;
+}
+
+int VectorRemoveRange(Vector* v, size_t start, size_t length)
+{
+	if (v == NULL || v->itemSize == 0) return M_FAILURE_GEN;
+	if (start >= v->length) return M_FAILURE_GEN;
+	
+	if (length == 0) return M_SUCCESS;
+	if (start > SIZE_MAX - length) return M_FAILURE_GEN;
+	if (start + length > v->length) return M_FAILURE_GEN;
+
+	void* vPtr = (char*)v->data + start * v->itemSize;
+	if (v->destructor != NULL)
+	{
+		for (size_t i = 0; i < length; ++i)
+		{
+			void* removePtr = (char*)vPtr + i * v->itemSize;
+			if (v->destructor(removePtr) != M_SUCCESS) return M_FAILURE_GEN;
+		}
+	}
+
+	size_t moveLength = (v->length - start - length) * v->itemSize;
+	void* movePtr = (char*)vPtr + length * v->itemSize;
+	memmove(vPtr, movePtr, moveLength);
+	v->length -= length;
 
 	return M_SUCCESS;
 }
