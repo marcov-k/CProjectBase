@@ -489,7 +489,7 @@ static int ConcatCStrings(String* dest, const char s1[], size_t s1Len, const cha
 		}
 	}
 
-	if (GrowString(dest, length) != M_SUCCESS) goto STRING_FAILURE;
+	if (GrowString(dest, length) != M_SUCCESS) goto FAILURE;
 
 	if (bothContained)
 	{
@@ -545,7 +545,7 @@ static int ConcatCStrings(String* dest, const char s1[], size_t s1Len, const cha
 	dest->length = length;
 	return M_SUCCESS;
 
-STRING_FAILURE:
+FAILURE:
 	if (temp != NULL) free(temp);
 	return M_FAILURE_GEN;
 }

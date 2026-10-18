@@ -173,12 +173,12 @@ Vector CopyVector(const Vector* v, Copier copier)
 	copy.destructor = v->destructor;
 	copy.length = v->length;
 
-	goto SUCCESS;
+	goto RETURN;
 
 FAILURE:
 	copy.itemSize = 0;
 
-SUCCESS:
+RETURN:
 	return copy;
 }
 
