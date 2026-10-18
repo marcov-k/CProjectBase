@@ -132,7 +132,7 @@ int CopyStringTo(void* dest, const void* source)
 	if (dest == source) return M_SUCCESS;
 
 	String* destStr = (String*)dest;
-	String* sourceStr = (String*)source;
+	const String* sourceStr = (String*)source;
 
 	if (sourceStr->length == 0)
 	{
@@ -707,8 +707,8 @@ bool StringsEqual(const void* s1, const void* s2)
 {
 	if (s1 == NULL || s2 == NULL) return false;
 
-	String* s1Str = (String*)s1;
-	String* s2Str = (String*)s2;
+	const String* s1Str = (String*)s1;
+	const String* s2Str = (String*)s2;
 
 	if (s1Str->length == 0 && s2Str->length == 0) return true;
 

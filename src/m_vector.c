@@ -187,7 +187,7 @@ int CopyVectorTo(void* dest, const void* source, Copier copier)
 	if (dest == NULL || source == NULL) return M_FAILURE_GEN;
 
 	Vector* destVec = (Vector*)dest;
-	Vector* sourceVec = (Vector*)source;
+	const Vector* sourceVec = (Vector*)source;
 
 	if (sourceVec->itemSize == 0) return M_FAILURE_GEN;
 
@@ -464,8 +464,8 @@ bool VectorsEqual(const void* v1, const void* v2, Comparer comparer)
 {
 	if (v1 == NULL || v2 == NULL) return false;
 
-	Vector* v1Vec = (Vector*)v1;
-	Vector* v2Vec = (Vector*)v2;
+	const Vector* v1Vec = (Vector*)v1;
+	const Vector* v2Vec = (Vector*)v2;
 
 	if (v1Vec->itemSize == 0 || v2Vec->itemSize == 0) return false;
 	if (v1Vec->itemSize != v2Vec->itemSize) return false;
