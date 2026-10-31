@@ -17,7 +17,11 @@ project (CProjectBase LANGUAGES C)
 add_executable (CProjectBase  "main.c" "include/m_string.h" "src/m_string.c" "include/m_math_utils.h" "src/m_math_utils.c" "include/m_result.h" "include/m_contain.h" "include/m_vector.h" "src/m_vector.c" "include/m_deref.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET CProjectBase PROPERTY CXX_STANDARD 20)
+  set_target_properties(CProjectBase PROPERTIES
+	C_STANDARD 17
+	C_STANDARD_REQUIRED ON
+	C_EXTENSIONS OFF
+  )
 endif()
 
 # TODO: Add tests and install targets if needed.
