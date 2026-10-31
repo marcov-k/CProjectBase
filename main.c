@@ -37,6 +37,14 @@ int main()
 
 	printf("\nOriginal and copied strings equal after modifications: %s\n\n", StringsEqual(&s, &s2) == true ? "true" : "false");
 
+	StringToUpper(&s);
+	printf("\nOriginal string converted to all uppercase: ");
+	PrintStringLn(&s);
+
+	StringToLower(&s2);
+	printf("\nCopied string converted to all lowercase: ");
+	PrintStringLn(&s2);
+
 	DestroyString(&s);
 	DestroyString(&s2);
 

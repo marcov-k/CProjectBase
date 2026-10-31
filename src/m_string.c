@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CASE_OFFSET 'a' - 'A'
+
 static int GrowString(String* s, size_t length)
 {
 	if (s == NULL) return M_FAILURE_GEN;
@@ -947,4 +949,38 @@ int StringRemoveCStrAll(String* s, const char substring[])
 	if (substringLen > s->length) return M_SUCCESS;
 
 	return RemoveCStrFromStringAll(s, substring, substringLen);
+}
+
+int StringToLower(String* s)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+
+	if (s->length == 0) return M_SUCCESS;
+
+	for (size_t i = 0; i < s->length; ++i)
+	{
+		if (s->data[i] >= 'A' && s->data[i] <= 'Z')
+		{
+			s->data[i] += CASE_OFFSET;
+		}
+	}
+
+	return M_SUCCESS;
+}
+
+int StringToUpper(String* s)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+
+	if (s->length == 0) return M_SUCCESS;
+
+	for (size_t i = 0; i < s->length; ++i)
+	{
+		if (s->data[i] >= 'a' && s->data[i] <= 'z')
+		{
+			s->data[i] -= CASE_OFFSET;
+		}
+	}
+
+	return M_SUCCESS;
 }
