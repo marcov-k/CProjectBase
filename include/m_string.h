@@ -187,6 +187,11 @@ int StringRemoveCStrFirst(String* s, const char substring[]);
 // Remove all instances of a C-string from a String
 int StringRemoveCStrAll(String* s, const char substring[]);
 
+// Replace the first instance of a character in a String with another character
+int StringReplaceCharFirst(String* s, const char oldChar, const char newChar);
+// Replace all instances of a character in a String with another character
+int StringReplaceCharAll(String* s, const char oldChar, const char newChar);
+
 // Convert all alphabetical characters in a String to lowercase
 int StringToLower(String* s);
 // Convert all alphabetical characters in a String to uppercase

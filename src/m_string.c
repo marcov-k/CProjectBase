@@ -951,6 +951,41 @@ int StringRemoveCStrAll(String* s, const char substring[])
 	return RemoveCStrFromStringAll(s, substring, substringLen);
 }
 
+int StringReplaceCharFirst(String* s, const char oldChar, const char newChar)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+
+	if (s->length == 0 || oldChar == newChar) return M_SUCCESS;
+
+	for (size_t i = 0; i < s->length; ++i)
+	{
+		if (s->data[i] == oldChar)
+		{
+			s->data[i] = newChar;
+			return M_SUCCESS;
+		}
+	}
+
+	return M_SUCCESS;
+}
+
+int StringReplaceCharAll(String* s, const char oldChar, const char newChar)
+{
+	if (s == NULL) return M_FAILURE_GEN;
+
+	if (s->length == 0 || oldChar == newChar) return M_SUCCESS;
+
+	for (size_t i = 0; i < s->length; ++i)
+	{
+		if (s->data[i] == oldChar)
+		{
+			s->data[i] = newChar;
+		}
+	}
+
+	return M_SUCCESS;
+}
+
 int StringToLower(String* s)
 {
 	if (s == NULL) return M_FAILURE_GEN;
